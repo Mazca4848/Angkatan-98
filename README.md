@@ -10,17 +10,17 @@ Tidak ada ending yang selamat utuh. Setiap permainan merenggut minimal satu oran
 
 **Langsung di browser.** Unduh repo ini (tombol **Code → Download ZIP**), ekstrak, lalu buka `index.html` di Chrome, Firefox, atau Edge. Tidak perlu instalasi apa pun.
 
-**Lewat GitHub Pages.** Kalau repo ini sudah diaktifkan Pages-nya, buka `https://<nama-akun>.github.io/angkatan-98/`.
+**Lewat GitHub Pages.** Buka [mazca4848.github.io/Angkatan-98](https://mazca4848.github.io/Angkatan-98/).
 
 Klik orang dan benda di layar untuk mengamati, lalu pilih tindakanmu di panel bawah. Permainan tersimpan otomatis di browser, jadi kamu bisa menutup tab dan melanjutkannya dari layar pembuka.
 
 ## Unggah ke GitHub dan aktifkan GitHub Pages
 
-1. Buat repository baru di GitHub bernama `angkatan-98`. Jangan centang pilihan untuk menambahkan README, `.gitignore`, atau lisensi.
+1. Buat repository baru di GitHub. Jangan centang pilihan untuk menambahkan README, `.gitignore`, atau lisensi.
 2. Dari folder ini, jalankan:
 
    ```bash
-   git remote add origin https://github.com/<nama-akun>/angkatan-98.git
+   git remote add origin https://github.com/Mazca4848/Angkatan-98.git
    git push -u origin main
    ```
 
