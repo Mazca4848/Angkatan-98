@@ -277,7 +277,7 @@ function go(id) {
     if (n.log) S.log.push(val(n.log));
     if (n.text && n.mode !== 'intro') catatRiwayat({ judul: val(n.judul), waktu: val(n.waktu), teks: [].concat(val(n.text)) });
     const q = S.bulan.slice(0, 4) + Math.floor((Number(S.bulan.slice(5, 7)) - 1) / 3);
-    if (S.bekal.includes('foto') && S.nyali < 20 && !S.f['foto' + q]) { S.f['foto' + q] = true; apply({ nyali: 5 }); (S.ui.enterDelta = S.ui.enterDelta || []).push(['Foto keluarga di dompet: Nyali +5', false]); }
+    if (diTas('foto') && S.nyali < 20 && !S.f['foto' + q]) { S.f['foto' + q] = true; apply({ nyali: 5 }); (S.ui.enterDelta = S.ui.enterDelta || []).push(['Foto keluarga di dompet: Nyali +5', false]); }
     if (!BOT) kamera(moved);
     save(); render(); if (!BOT && typeof window !== 'undefined') { $('panel').scrollTop = 0; if (moved) window.scrollTo(0, 0); }
     if (!BOT) keterangan(val(n.waktu));
@@ -312,7 +312,7 @@ function aksi(a, v) {
   if (a === 'waktuHabis') { const w = S.ui.waktu; if (!w || w.id !== v) return; S.ui.waktu = null; return M.act(n, 'waktuHabis'); }
   if (a === 'cek') return cekKabar(+v);
   if (a === 'sebar') return sebarKabar(+v);
-  if (a === 'lanjut') { const d = loadSave(); if (d) { S = d; return render(); } return; }
+  if (a === 'lanjut') { const d = loadSave(); if (d) { S = d; if (S.hariUlang) { delete S.hariUlang; MODES.hari.enter(NODES[S.node], true); } return render(); } return; }
   return M.act(n, a, v);
 }
 const actions = () => {
@@ -329,6 +329,8 @@ const actions = () => {
 /* ---------- pengamatan ---------- */
 function look(id) {
   const n = NODES[S.node], x = n.hots && n.hots[id];
+  // benda di adegan yang bukan benda amatan: biar mode yang memutuskan (peta, orang di tempat)
+  if (!x && MODES[n.mode || 'story'].klik) return MODES[n.mode || 'story'].klik(n, id);
   if (!x || S.ui.last || (x.req && !x.req(S))) return;
   const key = S.node + ':' + id;
   S.ui.obsDelta = null;
@@ -755,7 +757,7 @@ const KEY = 'angkatan98-simpan';
 function save() { if (BOT) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* penyimpanan tidak tersedia */ } }
 // versi simpanan: naikkan setiap kali adegan atau isi state berubah sampai simpanan lama tidak cocok lagi.
 // Simpanan v1 tidak punya kolom versi, jadi dianggap versi 1.
-const VERSI_SIMPAN = 1;
+const VERSI_SIMPAN = 2;
 // adegan yang diganti nama atau dihapus: id lama -> id baru. Diisi saat v2 mengganti kos1–kos7.
 const PINDAH_ADEGAN = {};
 let simpananUsang = false;
@@ -763,6 +765,8 @@ function cocokkan(d) {
   if (!d || (d.versi || 1) > VERSI_SIMPAN) return null;
   if (PINDAH_ADEGAN[d.node]) d.node = PINDAH_ADEGAN[d.node];
   if (!d.node || !NODES[d.node]) { simpananUsang = true; return null; }
+  // v1 → v2: kunjungan kos menjadi Hari yang Berulang; isi S.m lama tidak cocok, hari itu dibuka ulang
+  if ((d.versi || 1) < 2 && NODES[d.node].mode === 'hari') d.hariUlang = true;
   d.versi = VERSI_SIMPAN;
   return d;
 }

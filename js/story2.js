@@ -378,7 +378,7 @@ Object.assign(NODES, {
       { t: 'Tidak datang dan bersiap menghilang', fx: { dpoResmi: true, jejak: 15 }, go: 'kos7', note: 'Kamu tidak datang. Dua hari kemudian, statusmu berubah menjadi buron. Setidaknya kamu sempat menyiapkan tas dan uang.' }
     ]
   },
-  kos7: kosNode({ bab: 'Antara bab 10 dan 11', waktu: 'Maret 1998', dari: '1998-02', bulan: '1998-03', kalender: 'Maret 1998', next: 'b11_razia', enter: { iklim: 5 }, text: [...KOS_TEXT, 'Koran di meja ibu kos memuat susunan kabinet baru yang dilantik 14 Maret. Di dalamnya ada pengusaha kroni Presiden dan putri sulungnya sendiri. Di warung, orang-orang tertawa getir.'] }),
+  kos7: kosNode({ bab: 'Antara bab 10 dan 11', waktu: 'Maret 1998', dari: '1998-02', bulan: '1998-03', kalender: 'Maret 1998', next: 'b11_razia', enter: { iklim: 5 }, text: s => [...KOS_TEXT(s), 'Koran di meja ibu kos memuat susunan kabinet baru yang dilantik 14 Maret. Di dalamnya ada pengusaha kroni Presiden dan putri sulungnya sendiri. Di warung, orang-orang tertawa getir.'] }),
 
   b11_razia: {
     mode: 'razia', bab: 11, judul: 'Razia', waktu: 'akhir Maret 1998 · pukul 23.40', bulan: '1998-03', scene: 'sekre', v: 'razia', alt: 'Sekretariat malam, mesin stensil berputar',

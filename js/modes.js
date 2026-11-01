@@ -796,7 +796,7 @@ MODES.tail = {
 
 /* ---------- razia: tindakan terbatas ---------- */
 MODES.razia = {
-  enter(n) { S.m = { left: n.budget(S), done: [], lines: [] }; if (n.detik) mulaiWaktu(val(n.detik)); },
+  enter(n) { S.m = { left: n.budget(S), done: [], lines: [] }; if (n.detik) mulaiWaktu(val(n.detik)); if (diTas('bukti') && S.bukti.length) S.f.bawaBukti = true; },
   panel(n) {
     let h = meta(n, `sisa ${S.m.left} tindakan`) + prose(n) + lookHTML(n);
     if (S.ui.last) return h + resultHTML();

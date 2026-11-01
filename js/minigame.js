@@ -220,7 +220,7 @@ function jawabMain(g, v) {
 const bisaUlang = g => g.i < 2 && g.coba <= ULANG_MAKS;
 function panelMain(m) {
   const g = m.mg, pr = PRIOR[Math.floor(g.i / 2)], O = OBROLAN[g.id];
-  let h = pr ? `<div class="ask mg" tabindex="-1"><p class="label">${pr.t} · ${SLOT[g.id].t} · percobaan ${g.coba}${g.i < 2 ? ` dari ${ULANG_MAKS + 1}` : ''}${m.ulang ? ' · waktumu untuk kegiatan lain makin sempit' : ''}</p>` : `<div class="ask mg" tabindex="-1"><p class="label">${O.nama} panik. Tenangkan dengan cara yang ia butuhkan.</p>`;
+  let h = g.hari ? `<div class="ask mg" tabindex="-1"><p class="label">${SLOT[g.id].t}</p>` : pr ? `<div class="ask mg" tabindex="-1"><p class="label">${pr.t} · ${SLOT[g.id].t} · percobaan ${g.coba}${g.i < 2 ? ` dari ${ULANG_MAKS + 1}` : ''}${m.ulang ? ' · waktumu untuk kegiatan lain makin sempit' : ''}</p>` : `<div class="ask mg" tabindex="-1"><p class="label">${O.nama} panik. Tenangkan dengan cara yang ia butuhkan.</p>`;
   if (g.jenis === 'obrolan') h += g.jejak.map(x => `<div class="kb"><b>${O.nama}</b><p>${x.kata}</p><p>Kamu: “${x.jawab}”</p><p class="fine">${x.reaksi}</p></div>`).join('');
   if (g.hasil) {
     h += `<div class="obs"><p class="${g.hasil.ok ? 'good' : 'bad'}">${g.hasil.teks}</p></div>`;

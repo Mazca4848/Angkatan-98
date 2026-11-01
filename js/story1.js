@@ -23,8 +23,9 @@ const FRAMING = [
 const FRAME_SENIOR = { moral: 'fikri', ekonomi: 'ratna', politik: 'damar', konstitusi: 'yudi' };
 const larasIkut = s => s.f.larasDitolong && rekrut('laras') ? ' Laras menunggumu di tangga. “Aku utang satu, kan? Aku ikut.”' : '';
 const sapaan = () => genderKu() === 'P' ? 'Mbak' : 'Mas';
-const KOS_TEXT = ['Kamar tiga kali tiga meter di gang belakang kampus. Kasurnya beralas sarung kotak-kotak, dan kipas angin berderit di pojok.', 'Setiap kunjungan ke kamar ini mewakili beberapa bulan hidupmu. Atur uangmu dulu, lalu isi enam slot waktu menurut prioritas.'];
-const kosNode = (o) => ({ mode: 'kos', scene: 'kos', judul: 'Kamar Kos', alt: 'Kamar kos dilihat dari kasur', hots: KOS_HOTS, text: KOS_TEXT, ...o });
+// Hari yang Berulang: satu hari yang mewakili kebiasaanmu sampai babak berikutnya, dibingkai sebagai halaman buku catatan
+const KOS_TEXT = s => [...(s.node === 'kos1' ? ['Kak Ratna memberimu buku tulis bersampul cokelat. “Catat harimu. Kalau tidak tercatat, besok kita mulai dari nol.”'] : []), `${val(NODES[s.node].waktu)}. Hari-hari ini bentuknya hampir sama. Yang kamu tulis hari ini mewakili semuanya.`, `Pukul 08.00 di kamar kos tiga kali tiga meter. Bereskan urusan pagi, isi tasmu, lalu keluar. Setiap kegiatan memakan jam, dan jam malam kosmu pukul ${fmtJam(jamMalam())}.`];
+const kosNode = (o) => ({ mode: 'hari', scene: s => s.m && s.m.step && !['uang', 'tugas', 'hasil'].includes(s.m.step) ? (s.m.peta ? 'petaKampus' : 'tempat') : 'kos', judul: 'Kamar Kos', alt: 'Kamar kos dilihat dari kasur', hots: KOS_HOTS, text: KOS_TEXT, ...o });
 
 /* tamu pintu diskusi, bab 3 */
 const INSPEKSI1 = [

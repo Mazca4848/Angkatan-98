@@ -16,11 +16,11 @@ function selaJatuh(tujuan) {
   if (sekali('ultah', tujuan === 'kos3')) return 'sela_ultah';
   if (sekali('keliling', tujuan === 'kos5')) return 'sela_keliling';
   if (sekali('piala', tujuan === 'b18_semanggi')) return 'sela_piala';
-  if (T.mode === 'kos' && S.uang.tunai < harga(15000) && (S.f.tolongKali || 0) < 2 && S.f.tolongDi !== tujuan) {
+  if (T.mode === 'hari' && S.uang.tunai < harga(15000) && (S.f.tolongKali || 0) < 2 && S.f.tolongDi !== tujuan) {
     S.f.tolongKali = (S.f.tolongKali || 0) + 1; S.f.tolongDi = tujuan; return 'sela_tolong';
   }
   const malamAksi = tujuan === 'b9_kumpul';
-  if ((T.mode === 'kos' || malamAksi) && S.nyali < (malamAksi ? 50 : 35) && S.f.insomniaDi !== tujuan) {
+  if ((T.mode === 'hari' || malamAksi) && S.nyali < (malamAksi ? 50 : 35) && S.f.insomniaDi !== tujuan) {
     const k = S.f.keputusan;
     S.f.insomniaDi = tujuan;
     S.f.insomniaJenis = malamAksi ? 'aksi' : S.f.gagal ? 'sesudah' : k ? 'sebelum' : 'biasa';
