@@ -31,7 +31,7 @@ body {
   background: var(--desk);
   color: var(--on-desk);
   font-family: var(--f-body);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.55;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -44,14 +44,42 @@ body {
 .hud-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
 .hud-stats b { color: var(--paper); }
 .hud-stats .warn, .hud-stats .warn b { color: var(--red-hi); }
+.hud-stats .bar { display: inline-flex; align-items: center; gap: 6px; }
+.hud-stats .bar i { display: inline-block; width: 56px; height: 8px; border: 1px solid var(--on-desk-soft); }
+.hud-stats .bar b { display: block; height: 100%; background: var(--paper); }
+.hud-stats .bar.warn b { background: var(--red-hi); }
+.hud-suara { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--paper); background: transparent; border: 1px solid var(--on-desk-soft); padding: 0 6px; cursor: pointer; }
+.hud-suara:focus-visible { outline: 2px solid var(--red-hi); outline-offset: 2px; }
 .rank { border: 2px solid var(--red-hi); color: var(--red-hi); padding: 0 6px; font-family: var(--f-display); font-size: .9rem; letter-spacing: .05em; }
 .stage { position: relative; width: min(100%, calc((100vh - 290px) * 16 / 9)); min-width: min(100%, 520px); max-width: 100%; margin: 0 auto; aspect-ratio: 16 / 9; background: var(--paper); box-shadow: 0 22px 44px -26px #000; overflow: hidden; }
-.stage > svg { display: block; width: 100%; height: 100%; }
+.kam { width: 100%; height: 100%; will-change: transform; }
+.kam.dorong { animation: dorong 26s cubic-bezier(.2, .6, .3, 1) both; }
+@keyframes dorong { from { transform: scale(1); } to { transform: scale(1.035); } }
+.kam > svg { display: block; width: 100%; height: 100%; transition: transform 1.1s cubic-bezier(.3, .7, .2, 1); }
+/* tokoh bernapas patah-patah seperti animasi cukil, berganti pose dua kali per tarikan; filter kasar hanya dihitung ulang saat pose berganti */
+.stage .napas { animation: napas 4.4s steps(1, end) infinite var(--fase, 0s); }
+@keyframes napas { 0% { transform: none; } 50% { transform: translateY(-2px); } }
+.stage .napas .mata { animation: kedip 5.7s steps(1, end) infinite var(--fase, 0s); transform-box: fill-box; transform-origin: center; }
+@keyframes kedip { 0% { transform: none; } 96% { transform: scaleY(.15); } 98% { transform: none; } }
+.keterangan { position: absolute; left: 3%; bottom: 5%; margin: 0; max-width: 90%; box-sizing: content-box; padding: .25em .6em; overflow: hidden; white-space: nowrap; background: var(--ink); color: var(--paper); font-weight: 700; font-size: clamp(.78rem, 1.9vw, 1.05rem); line-height: 1.4; opacity: 0; pointer-events: none; }
+.keterangan.ketik { animation: ketik calc(var(--n) * 42ms) steps(var(--n), end) .45s both, pudar .8s calc(var(--n) * 42ms + 3.4s) forwards; }
+@keyframes ketik { from { width: 0; opacity: 1; } to { width: calc(var(--n) * 1ch); opacity: 1; } }
+@keyframes pudar { to { opacity: 0; } }
+/* naskah ditekan ke kertas satu per satu */
+.mengungkap .ungkap { animation: tinta .55s var(--tunda, 0s) cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes tinta { from { opacity: 0; visibility: hidden; filter: blur(1.5px); } to { opacity: 1; visibility: visible; filter: none; } }
+/* pilihan dibaca sebagai tindakan dalam cerita; labelnya hanya untuk pembaca layar */
+.pick .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.pick::before { content: "— "; }
 .hot { cursor: pointer; outline: none; }
 .hot:hover, .hot:focus-visible { filter: drop-shadow(0 0 2px var(--red)) drop-shadow(0 0 8px var(--red)); }
+.titik { cursor: crosshair; outline: none; }
+.titik:hover, .titik:focus-visible { filter: drop-shadow(0 0 2px var(--paper)) drop-shadow(0 0 8px var(--paper)); }
+.kam > svg:has(.titik) { touch-action: none; }
 .neon { animation: flick 5s infinite steps(1); }
 @keyframes flick { 0%, 100% { opacity: 1; } 46% { opacity: .35; } 47% { opacity: 1; } 71% { opacity: .55; } 72% { opacity: 1; } }
-.blink i { position: absolute; left: 0; right: 0; height: 51%; background: #0c0a09; transform: scaleY(0); transition: transform .22s ease-in; pointer-events: none; }
+.blink i { position: absolute; left: 0; right: 0; height: 51%; background: #0c0a09; transform: scaleY(0); transition: transform .42s cubic-bezier(.2, .7, .3, 1); pointer-events: none; }
+.stage.shut .blink i { transition: transform .22s ease-in; }
 .blink i:first-child { top: 0; transform-origin: top; }
 .blink i:last-child { bottom: 0; transform-origin: bottom; }
 .stage.shut .blink i { transform: scaleY(1); }
@@ -63,12 +91,30 @@ body {
 .panel p { margin: 0; }
 .label { margin: 0; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
 .obs { background: var(--paper-2); padding: 12px 14px; display: grid; gap: 8px; max-width: 68ch; }
-.obs:focus { outline: none; }
+.obs:focus, .kabar:focus, .mg:focus { outline: none; }
+.waktu-bar, .meter { height: 8px; background: var(--sheet); border: 2px solid var(--ink); }
+.waktu-bar i, .meter i { display: block; height: 100%; background: var(--red); }
+.waktu-bar i { width: var(--mulai); animation: susut linear forwards; }
+@keyframes susut { from { width: var(--mulai); } to { width: 0; } }
+@media (prefers-reduced-motion: reduce) { .waktu-bar i { animation-timing-function: steps(10); } }
+.kalimat { font-weight: 700; min-height: 1.6em; }
+.marah { display: grid; gap: 4px; margin: 6px 0; }
 .kabar { display: grid; gap: 8px; max-width: 68ch; }
 .kb { border-left: 3px solid var(--ink); padding: 2px 0 2px 12px; display: grid; gap: 2px; }
 .kb p { font-style: italic; }
 .cek { font-style: normal !important; font-weight: 700; font-size: .85rem; }
 .say { font-style: italic; max-width: 68ch; }
+/* suara batin protagonis: lebih redup dari narasi, seperti pikiran yang lewat */
+.batin { font-style: italic; color: var(--ink-soft); max-width: 68ch; padding-left: 12px; border-left: 2px dotted var(--ink-soft); }
+.jejak { display: grid; gap: 6px; max-width: 68ch; }
+.jejak p:not(.label) { font-style: italic; }
+.koleksi ul { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .86rem; }
+.koleksi .belum { color: var(--ink-soft); }
+/* percakapan: ucapan tokoh rata kiri seperti naskah, ucapanmu ditandai garis merah di tepi */
+.dlg { display: grid; gap: 8px; max-width: 68ch; }
+.dlg:focus { outline: none; }
+.dlg .jawab { margin-left: 1.2em; padding-left: 10px; border-left: 3px solid var(--red); font-weight: 700; }
+.dlg .choices { margin-top: 4px; }
 .look { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chip { font: inherit; font-size: .86rem; color: var(--ink); background: transparent; border: 1.5px solid var(--ink); padding: 3px 10px; cursor: pointer; text-align: left; }
 .chip.seen { border-style: dashed; color: var(--ink-soft); }
@@ -80,13 +126,14 @@ body {
 .choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .choice { width: 100%; display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); gap: 10px; align-items: start; text-align: left; font: inherit; color: var(--ink); background: transparent; border: 2px solid var(--ink); padding: 10px 12px; cursor: pointer; }
 .choice:hover, .choice[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.choice:hover small.bad, .choice[aria-pressed="true"] small.bad { color: #f08a7e; }
 .choice:disabled { opacity: .5; cursor: not-allowed; background: transparent; color: var(--ink); }
 .choice small { display: block; font-size: .8rem; opacity: .8; }
 .key { font-family: var(--f-display); font-size: 1.3rem; line-height: 1; }
 .btn { justify-self: start; font-family: var(--f-display); font-size: 1.05rem; letter-spacing: .05em; text-transform: uppercase; color: var(--paper); background: var(--red); border: 0; padding: 9px 18px; cursor: pointer; }
 .btn.alt { background: var(--ink); }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
-button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .result { display: grid; gap: 10px; padding-top: 12px; border-top: 4px double var(--ink); max-width: 68ch; }
 .result:focus { outline: none; }
@@ -115,6 +162,11 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width:
 .slot { border: 2px dashed var(--ink-soft); padding: 8px 10px; min-height: 4.2em; display: grid; gap: 2px; align-content: start; }
 .slot.full { border-style: solid; border-color: var(--ink); }
 .slot .empty { color: var(--ink-soft); }
+.slots.dua { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 10px; }
+button.slot { font: inherit; color: inherit; background: none; text-align: left; cursor: pointer; }
+.slot.aktif { border-color: var(--red); }
+.potongan { margin: 0; padding: 10px 14px; border-left: 4px solid var(--ink); background: var(--sheet); font-style: italic; }
+.form textarea { font: inherit; color: var(--ink); background: var(--sheet); border: 2px solid var(--ink); padding: 8px 10px; width: 100%; box-sizing: border-box; }
 .link { justify-self: start; font: inherit; font-size: .8rem; color: var(--red); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 .acts { display: flex; flex-wrap: wrap; gap: 6px; }
 .event { background: var(--ink); color: var(--paper); padding: 12px 14px; display: grid; gap: 6px; }
@@ -139,7 +191,17 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width:
   .docs, .fak, .notes-grid { grid-template-columns: minmax(0, 1fr); }
   .slots, .posgrid { grid-template-columns: minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .blink i { transition: none; } .neon { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .blink i, .stage.shut .blink i, .kam > svg { transition: none; } .neon, .kam.dorong, .stage .napas, .stage .napas .mata { animation: none; } }
+/* laptop dan layar lebar: adegan di kiri, naskah di kanan; halaman pas satu layar, hanya naskah yang bergulir */
+@media (min-width: 1000px) and (min-height: 520px) {
+  html, body { height: 100%; }
+  body { box-sizing: border-box; overflow: hidden; padding-block: 12px; }
+  .app { max-width: 1600px; height: 100%; grid-template-columns: minmax(0, 1.6fr) minmax(380px, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+  .hud { grid-column: 1 / -1; }
+  .stage { grid-column: 1; grid-row: 2 / 4; align-self: start; min-width: 0; width: min(100%, calc((100dvh - 150px) * 16 / 9)); }
+  .panel { grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; }
+  .notes { grid-column: 2; grid-row: 3; max-height: 32dvh; overflow-y: auto; }
+}
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -162,7 +224,8 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width:
 <div class="app">
   <header class="hud" id="hud"></header>
   <div class="stage" id="stage">
-    <svg id="scene" viewBox="0 0 960 540" role="group" aria-label="Adegan"></svg>
+    <div class="kam" id="kam"><svg id="scene" viewBox="0 0 960 540" role="group" aria-label="Adegan"></svg></div>
+    <p class="keterangan" id="keterangan" aria-hidden="true"></p>
     <div class="blink" aria-hidden="true"><i></i><i></i></div>
   </div>
   <section class="panel" id="panel" aria-live="polite" tabindex="-1"></section>
@@ -173,10 +236,14 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width:
 <script src="js/scenes.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/modes.js"></script>
+<script src="js/minigame.js"></script>
 <script src="js/story1.js"></script>
 <script src="js/story2.js"></script>
 <script src="js/story3.js"></script>
 <script src="js/story4.js"></script>
+<script src="js/dialog.js"></script>
+<script src="js/selingan.js"></script>
+<script src="js/suara.js"></script>
 <script>
 // self-check: setiap tujuan pilihan yang tertulis langsung harus ada
 for (const [id, n] of Object.entries(NODES)) {
@@ -185,15 +252,31 @@ for (const [id, n] of Object.entries(NODES)) {
   if (Array.isArray(n.choices)) for (const c of n.choices) if (typeof c.go === 'string') console.assert(NODES[c.go], 'tujuan tidak ada: ' + id + ' → ' + c.go);
 }
 $('scene').addEventListener('click', e => { const h = e.target.closest('.hot'); if (h) act('look', h.dataset.hot); });
-$('scene').addEventListener('keydown', e => { const h = e.target.closest('.hot'); if (h && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); act('look', h.dataset.hot); } });
+$('scene').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const t = e.target.closest('[data-titik]');
+  if (t) { e.preventDefault(); act('titik', t.dataset.titik); const f = $('scene').querySelector(`[data-titik="${S.m.rute && S.m.rute.at(-1)}"]`); if (f) f.focus(); return; }
+  const h = e.target.closest('.hot'); if (h) { e.preventDefault(); act('look', h.dataset.hot); }
+});
+// kapur di papan korlap: tekan lalu seret melewati titik-titik peta
+let kapur = false;
+$('scene').addEventListener('pointerdown', e => { const t = e.target.closest('[data-titik]'); if (!t) return; kapur = true; $('scene').setPointerCapture(e.pointerId); act('titik', t.dataset.titik); });
+$('scene').addEventListener('pointermove', e => { if (!kapur) return; const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest('[data-titik]'); if (t) act('titik', t.dataset.titik); });
+for (const ev of ['pointerup', 'pointercancel']) $('scene').addEventListener(ev, () => { kapur = false; });
+// klik atau tombol saat naskah sedang muncul: tampilkan semuanya sekaligus
+$('panel').addEventListener('click', selesaiUngkap, true);
+document.addEventListener('keydown', selesaiUngkap, true);
 $('panel').addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b || b.disabled || b.type === 'submit' || !b.dataset.a) return;
   act(b.dataset.a, b.dataset.v);
 });
+// tombol di HUD dan panel catatan (suara, batas waktu) berada di luar panel utama
+document.addEventListener('click', e => { const b = e.target.closest('#hud [data-a], #notes-body [data-a]'); if (b && !b.disabled) act(b.dataset.a, b.dataset.v); });
 $('panel').addEventListener('input', e => { if (e.target.id === 'ktm-nama') { S.nama = e.target.value; renderScene(); } });
-$('panel').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'ktm-form') act('ambil'); });
+$('panel').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'ktm-form') act('ambil'); if (e.target.id === 'mg-form') act('mg', $('mg-isi').value); });
 S = fresh();
+terapkanTeks();
 render();
 </script>
 </body>

@@ -93,7 +93,7 @@ function face(f) {
   s += '</g>';
   const brow = { tenang: ['M70 84 L92 82', 'M108 82 L130 84'], gugup: ['M70 86 L92 79', 'M108 79 L130 86'], marah: ['M70 79 L92 87', 'M108 87 L130 79'] }[mood];
   s += `<path d="${brow[0]} ${brow[1]}" ${ink(6)}/>`;
-  s += f.closed ? `<path d="M72 97 Q81 101 90 97 M110 97 Q119 101 128 97" ${ink(4)}/>` : `<path d="M71 97 Q81 89 91 97 Q81 102 71 97Z M109 97 Q119 89 129 97 Q119 102 109 97Z" fill="${K}"/>`;
+  s += f.closed ? `<path d="M72 97 Q81 101 90 97 M110 97 Q119 101 128 97" ${ink(4)}/>` : `<path class="mata" d="M71 97 Q81 89 91 97 Q81 102 71 97Z M109 97 Q119 89 129 97 Q119 102 109 97Z" fill="${K}"/>`;
   if (f.tired) s += `<path d="M72 106 Q81 111 90 106 M110 106 Q119 111 128 106" ${ink(3)}/>`;
   s += `<path d="M100 98 L93 117 L104 119" ${ink(4)}/>`;
   const mouth = { tenang: 'M88 133 Q100 136 112 133', gugup: 'M88 134 Q94 129 100 134 Q106 139 112 134', marah: 'M88 137 Q100 128 112 137' }[mood];
@@ -118,7 +118,8 @@ function face(f) {
   return s;
 }
 
-const person = (f, x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})">${face(f)}</g>`;
+// lapisan .napas: tokoh di panggung bernapas dan berkedip, fase digeser menurut posisi supaya tidak serempak
+const person = (f, x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})"><g class="napas" style="--fase:-${Math.abs(Math.round(x * 7 + y * 3)) % 47 / 10}s">${face(f)}</g></g>`;
 const hot = (id, label, inner) => `<g class="hot" data-hot="${id}" tabindex="0" role="button" aria-label="${label}">${inner}</g>`;
 const silhouette = (x, y, sc, fill = K) => `<g transform="translate(${x} ${y}) scale(${sc})"><circle cx="0" cy="-34" r="17" fill="${fill}"/><path d="M-30 30 Q-28 -12 0 -12 Q28 -12 30 30Z" fill="${fill}"/></g>`;
 

@@ -33,11 +33,11 @@ Klik orang dan benda di layar untuk mengamati, lalu pilih tindakanmu di panel ba
 | --- | --- | --- |
 | I. Maba | Agustus 1996 – Desember 1997 | keluarga, rak buku, jaga pintu diskusi, Pemilu 1997, rupiah jatuh |
 | II. Panas | Januari – Maret 1998 | rumor, teror, logistik demo, aksi, Damar hilang, razia dan kejar-kejaran |
-| III. Buron | April – awal Mei 1998 | berpindah kota, kontak pusat, diplomasi ke Jenewa |
+| III. Buron | April – awal Mei 1998 | surat panggilan, wajahmu di televisi, berpindah kota, menjaga jaringan kader dan senior, aksi bawah tanah, diplomasi ke Jenewa |
 | IV. Mei | 12–21 Mei 1998 | Trisakti, kerusuhan, pendudukan DPR |
 | V. Sesudahnya | November 1998 – 2006 | Semanggi, adikmu, Daftar Nama, epilog |
 
-Mekanik utama: inspeksi dokumen di pintu dan gerbang, rumor yang akurasinya bergantung pada kepercayaanmu pada sumber, ekonomi dengan kurs rupiah yang naik turun, mini game logistik demo, sembunyi, lari, lolos dari mobil yang membuntuti, buron di enam kota, interogasi, dan sembilan ending.
+Mekanik utama: bar kuasa rezim yang harus kamu kosongkan lewat aksi sebelum 21 Mei 1998, kedekatan dan tugas kader, surat dua arah dengan adikmu, pengumpulan massa per kalangan, ancaman bertingkat menurut Sorotan, inspeksi dokumen di pintu dan gerbang, rumor yang akurasinya bergantung pada kepercayaanmu pada sumber, ekonomi dengan kurs rupiah yang naik turun, percakapan bercabang yang diam-diam mengubah sikap setiap tokoh kepadamu, mini game logistik demo, sembunyi, lari, lolos dari mobil yang membuntuti, buron di enam kota, interogasi, sebelas ending (satu di antaranya fiksi sejarah alternatif yang diberi label), dan checkpoint per babak.
 
 ## Struktur folder
 
@@ -48,7 +48,10 @@ Mekanik utama: inspeksi dokumen di pintu dan gerbang, rumor yang akurasinya berg
 | `js/scenes.js` | semua latar adegan, digambar dengan SVG |
 | `js/engine.js` | state, ekonomi, rumor, render, dan simpan otomatis |
 | `js/modes.js` | mode permainan: cerita, kos, inspeksi, kejar-kejaran, buron, interogasi |
+| `js/minigame.js` | mini game slot kos: kuis kuliah, les privat, obrolan dengan senior, kader, dan keluarga, rangkuman bacaan, orasi per kalangan, menenangkan kawan saat buron |
 | `js/story1.js` – `js/story4.js` | naskah babak I sampai V dan ending |
+| `js/dialog.js` | percakapan dengan keluarga, senior, dan kader; jawabanmu menggeser afeksi tersembunyi tiap tokoh |
+| `js/suara.js` | suara latar dan bunyi kejadian, disintesis dengan Web Audio API tanpa berkas rekaman |
 | `tests/bot.js` | uji otomatis yang memainkan ratusan permainan acak |
 
 ## Uji otomatis

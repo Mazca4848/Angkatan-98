@@ -1,5 +1,8 @@
 /* Angkatan 98 · Babak III dan IV: buron, Jenewa, Mei 1998 */
 TOPIK.sasaran = { truth: () => false, benar: () => 'Jangan percaya siapa pun yang mengajak ke pertokoan. Itu jebakan.', salah: () => 'Kampus tetangga sudah turun ke pertokoan. Kita ketinggalan!' };
+TOPIK.kairo = { truth: () => false, benar: () => 'Di Kairo, Presiden bilang siap lengser kalau rakyat tidak percaya lagi. Tapi Istana sudah meralatnya. Belum ada yang pasti.', salah: () => 'Presiden sudah mundur di Kairo! Tinggal diumumkan di Jakarta.' };
+// Orde Baru bertahan (fiksi): kuasa rezim belum habis pada Kamis Pagi, 21 Mei 1998
+const orbaBertahan = s => (s.kuasa ?? 100) > 0;
 TOPIK.mundur = { truth: () => true, benar: () => 'Presiden akan mundur dalam dua hari. Bertahan saja.', salah: () => 'Presiden tidak akan mundur. Tentara akan membersihkan gedung ini besok subuh.' };
 const kartuSah = (id, nama, f, kampus) => ({ id, nama, sah: true, sepatu: 'sneakers', face: f, kode: 'Reformasi damai', docs: [{ type: 'kartu', nama, kampus, face: f, ring: 'B' }], kata: '“Ring B. Saya bawa nasi dari dapur umum.”', jawab: '“Kami gantian jaga dari jam dua belas.”' });
 
@@ -22,12 +25,12 @@ Object.assign(NODES, {
     text: ['Koridor gedung PBB di Jenewa. Sidang Komisi HAM berlangsung di ruang besar, tapi yang menentukan adalah pertemuan-pertemuan kecil di koridor. Waktumu hanya cukup untuk dua.'],
     hots: { delegasi: { label: 'Delegasi negara', text: 'Diplomat Belanda dengan dasi biru. Ia ingin bukti, bukan cerita.' }, pelapor: { label: 'Pelapor khusus', text: 'Pelapor khusus PBB untuk penghilangan paksa. Mejanya penuh map dari puluhan negara.' }, wartawan: { label: 'Wartawan', text: 'Wartawan kantor berita internasional. Ia butuh kutipan yang bisa dimuat besok pagi.' }, eksil: { label: 'Eksil 1965', text: 'Laki-laki tua berbahasa Jawa halus. Ia tinggal di Amsterdam sejak paspornya dicabut.' } },
     rounds: () => [0, 1].map(() => ({ text: s => `Pertemuan ${s.m.r + 1}. Siapa yang kamu temui?`, options: s => [
-      { t: 'Delegasi negara', req: s2 => !s2.f.temu_delegasi, run: s2 => { s2.f.temu_delegasi = true; const kuat = s2.bukti.length >= 2; apply({ tekanan: kuat ? 25 : 10 }); return kuat ? 'Kamu meletakkan foto bekas sepatu lars, kesaksian ibu kos, dan catatan kecurangan pemilu di mejanya. Ia memotret semuanya.' : 'Ia mendengarkan dengan sopan, lalu bertanya, “Ada buktinya?” Kamu tidak punya cukup.'; } },
-      { t: 'Pelapor khusus PBB', req: s2 => !s2.f.temu_pelapor, run: s2 => { s2.f.temu_pelapor = true; apply({ tekanan: s2.f.damarPublik ? 20 : 10 }); return s2.f.damarPublik ? 'Nama Bang Damar dimasukkan ke dalam laporan PBB, lengkap dengan tanggal dan saksi.' : 'Pelapor mencatat nama Bang Damar, tapi tanpa laporan publik di dalam negeri, kasusnya lemah.'; } },
-      { t: 'Wartawan internasional', req: s2 => !s2.f.temu_wartawan, run: s2 => { s2.f.temu_wartawan = true; const bisa = s2.bekal.includes('kamus') || aktif('laras'); apply({ tekanan: bisa ? 15 : 5, cap: 2 }); return bisa ? 'Wawancaramu dimuat di koran Eropa keesokan harinya. Di Jakarta, koran pemerintah menyebutmu antek asing.' : 'Tanpa kamus dan penerjemah, wawancaranya berantakan. Hanya satu kalimatmu yang dikutip, dan itu salah.'; } },
+      { t: 'Delegasi negara', req: s2 => !s2.f.temu_delegasi, run: s2 => { s2.f.temu_delegasi = true; const kuat = s2.bukti.length >= 2; apply({ tekanan: kuat ? 25 : 10, kuasa: kuat ? -6 : -2 }); return kuat ? `Kamu meletakkan isi mapmu di mejanya: ${s2.bukti.map(b => (BUKTI[b] || b).toLowerCase()).join(', ')}. Ia memotret semuanya.` : 'Ia mendengarkan dengan sopan, lalu bertanya, “Ada buktinya?” ' + (s2.f.buktiSekre && s2.f.buktiSekre.length ? 'Mapmu masih tersembunyi di plafon sekretariat di Jakarta.' : s2.f.buktiDisita && s2.f.buktiDisita.length ? 'Buktimu sudah disita aparat.' : 'Kamu tidak punya cukup.'); } },
+      { t: 'Pelapor khusus PBB', req: s2 => !s2.f.temu_pelapor, run: s2 => { s2.f.temu_pelapor = true; apply({ tekanan: s2.f.damarPublik ? 20 : 10, kuasa: s2.f.damarPublik ? -5 : -2 }); return s2.f.damarPublik ? 'Nama Bang Damar dimasukkan ke dalam laporan PBB, lengkap dengan tanggal dan saksi.' : 'Pelapor mencatat nama Bang Damar, tapi tanpa laporan publik di dalam negeri, kasusnya lemah.'; } },
+      { t: 'Wartawan internasional', req: s2 => !s2.f.temu_wartawan, run: s2 => { s2.f.temu_wartawan = true; const bisa = s2.bekal.includes('kamus') || aktif('laras'); apply({ tekanan: bisa ? 15 : 5, cap: 2, kuasa: bisa ? -4 : -1 }); return bisa ? 'Wawancaramu dimuat di koran Eropa keesokan harinya. Di Jakarta, koran pemerintah menyebutmu antek asing.' : 'Tanpa kamus dan penerjemah, wawancaranya berantakan. Hanya satu kalimatmu yang dikutip, dan itu salah.'; } },
       { t: 'Eksil 1965', req: s2 => !s2.f.temu_eksil, run: s2 => { s2.f.temu_eksil = true; apply({ nyali: 10 }); return 'Ia bercerita tentang tiga puluh tahun tidak bisa pulang, tentang ibunya yang meninggal tanpa ia tahu. “Jangan sampai kalian jadi kami.”'; } }
     ] })),
-    done: s => ({ note: `Tekanan internasional sekarang ${s.tekanan}. Tinggal satu keputusan: pulang atau tinggal.`, go: 'b13_pilih' })
+    done: s => ({ note: `${s.tekanan >= 50 ? 'Nama Indonesia disebut di banyak meja di Jenewa.' : 'Hanya sedikit delegasi yang mau mendengar.'} Tinggal satu keputusan: pulang atau tinggal.`, go: 'b13_pilih' })
   },
   b13_pilih: {
     bab: 13, judul: 'Jenewa', waktu: 'akhir April 1998', scene: 'jauh', alt: 'Kamar penginapan di Jenewa',
@@ -43,9 +46,9 @@ Object.assign(NODES, {
     text: ['Dari televisi penginapan, kamu melihat kabar Trisakti, lalu Jakarta yang terbakar. Kamu menelepon sekretariat setiap malam, dan tidak selalu ada yang mengangkat.'],
     hots: { tv: { label: 'Televisi', text: 'Asap hitam di atas Jakarta, ditayangkan tanpa suara di antara berita sepak bola.' }, telepon: { label: 'Telepon', text: 'Nada sambung yang panjang ke Jakarta.' } },
     choices: [
-      { t: 'Beri wawancara ke media internasional setiap hari', fx: { tekanan: 20, cap: 2 }, go: 'jauh_kamis', note: 'Wajahmu muncul di tiga stasiun televisi Eropa. Di Jakarta, rumah orang tuamu didatangi lagi.' },
-      { t: 'Telepon pusat dan bantu koordinasi dari jauh', fx: { massa: 5, pengaruh: 3 }, go: 'jauh_kamis', note: 'Kamu membacakan nomor-nomor LBH dan rumah sakit lewat telepon, satu per satu, sampai suaramu habis.' },
-      { t: 'Tulis surat panjang untuk Ibu', fx: { ibu: 1, nyali: 5 }, go: 'jauh_kamis', note: 'Kamu tidak tahu apakah surat itu sampai.' }
+      { t: 'Beri wawancara ke media internasional setiap hari', fx: { tekanan: 20, cap: 2, kuasa: -4 }, go: s => orbaBertahan(s) ? 'b17_komite' : 'jauh_kamis', note: 'Wajahmu muncul di tiga stasiun televisi Eropa. Di Jakarta, rumah orang tuamu didatangi lagi.' },
+      { t: 'Telepon pusat dan bantu koordinasi dari jauh', fx: { massa: 5, pengaruh: 3, kuasa: -3 }, go: s => orbaBertahan(s) ? 'b17_komite' : 'jauh_kamis', note: 'Kamu membacakan nomor-nomor LBH dan rumah sakit lewat telepon, satu per satu, sampai suaramu habis.' },
+      { t: 'Tulis surat panjang untuk Ibu', fx: { ibu: 1, nyali: 5 }, go: s => orbaBertahan(s) ? 'b17_komite' : 'jauh_kamis', note: 'Kamu tidak tahu apakah surat itu sampai.' }
     ]
   },
   jauh_kamis: {
@@ -61,24 +64,24 @@ Object.assign(NODES, {
     bab: 14, judul: 'Kabar dari Grogol', waktu: 'Selasa, 12 Mei 1998', bulan: '1998-05', scene: 'terminal', alt: 'Terminal bus Kampung Rambutan',
     enter: s => { for (const [k, st] of Object.entries(s.kader)) if (st === 'ditangkap' && (aktif('tigor') || s.ratna >= 3)) s.kader[k] = 'aktif'; return {}; },
     text: ['Bus dari luar kota berhenti di terminal Kampung Rambutan. Di pintu keluar, petugas memeriksa KTP penumpang satu per satu.'],
-    hots: { petugas: { label: 'Petugas', text: 'Ia mencocokkan wajah dengan selembar kertas berisi foto-foto fotokopian.' }, antrean: { label: 'Antrean', text: 'Penumpang menunggu dengan sabar. Tidak ada yang mau terlihat terburu-buru.' } },
+    hots: { petugas: { label: 'Petugas', text: s => 'Ia mencocokkan wajah dengan selembar kertas berisi foto-foto fotokopian.' + (s.sorotan >= 60 ? ' Fotomu ada di lembar paling atas.' : ' Kamu tidak melihat fotomu di lembar teratas.') }, antrean: { label: 'Antrean', text: s => 'Penumpang menunggu dengan sabar. Tidak ada yang mau terlihat terburu-buru.' + (aktif('wahyu') ? ' Di pintu samping, seorang kuli angkut kenalan Wahyu melambai pelan.' : ' Pintu samping dijaga seorang petugas yang sedang merokok.') } },
     choices: [
       { t: 'Tunjukkan KTP palsu', req: s => s.f.ktpPalsu, go: 'b14_sekre', note: 'Petugas membaca nama Joko Susilo keras-keras, lalu mengembalikan KTP-mu.' },
-      { t: 'Selipkan uang di antara KTP', cost: () => harga(20000), dis: s => s.uang.tunai < harga(20000), alasan: 'uangmu tidak cukup', run: s => { if (Math.random() < 0.3) apply({ sorotan: 10 }); }, go: 'b14_sekre', note: 'Petugas memasukkan uangnya ke saku tanpa melihatmu.' },
-      { t: 'Lewat pintu samping', run: s => { if (Math.random() < 0.5) apply({ sorotan: 10, nyali: -5 }); }, go: 'b14_sekre', note: 'Kamu menyelinap di antara kuli angkut. Seseorang berteriak di belakangmu, tapi kamu tidak menoleh.' }
+      { t: 'Selipkan uang di antara KTP', cost: () => harga(20000), dis: s => s.uang.tunai < harga(20000), alasan: 'uangmu tidak cukup', run: s => { if (s.sorotan >= 60) apply({ sorotan: 10 }); }, go: 'b14_sekre', note: s => s.sorotan >= 70 ? 'Petugas memasukkan uangnya ke saku, lalu mencatat namamu di buku kecil. Fotomu terlalu mudah dikenali.' : 'Petugas memasukkan uangnya ke saku tanpa melihatmu.' },
+      { t: 'Lewat pintu samping', run: s => { if (!aktif('wahyu')) apply({ sorotan: 10, nyali: -5 }); }, go: 'b14_sekre', note: s => aktif('wahyu') ? 'Kuli angkut kenalan Wahyu menyelipkanmu di antara karung-karung. Tidak ada yang menoleh.' : 'Kamu menyelinap di antara kuli angkut. Petugas di pintu samping berteriak di belakangmu, tapi kamu tidak menoleh.' }
     ]
   },
   b14_sekre: {
-    bab: 14, judul: 'Kabar dari Grogol', waktu: 'Selasa, 12 Mei 1998 · malam', scene: 'sekre', v: 'radio', enter: { nyali: -5, iklim: 25 }, alt: 'Sekretariat malam dengan radio dan televisi',
-    text: ['Menjelang malam, kabar datang dari radio dan telepon sekretariat: mahasiswa Universitas Trisakti ditembak setelah aksi damai di kampus mereka di Grogol.', 'Ruangan penuh wajah kawan. Semua mata menoleh ke presidium.'],
+    rencana: true, bab: 14, judul: 'Kabar dari Grogol', waktu: 'Selasa, 12 Mei 1998 · malam', scene: 'sekre', v: 'radio', enter: s => { s.f.plafonDiambil = ambilPlafon(); return { nyali: -5, iklim: 25, kuasa: -3 }; }, alt: 'Sekretariat malam dengan radio dan televisi',
+    text: s => ['Menjelang malam, kabar datang dari radio dan telepon sekretariat: mahasiswa Universitas Trisakti ditembak setelah aksi damai di kampus mereka di Grogol.', ...(s.f.plafonDiambil ? ['Sebelum rapat, kamu menurunkan map yang kamu sembunyikan saat razia. Berdebu, tapi isinya utuh.'] : []), 'Ruangan penuh wajah kawan. Semua mata menoleh ke presidium.'],
     kabar: s => [kabar('trisakti', s.bekal.includes('radio') ? 'radio' : 'tvri'), kabar('trisakti', 'warung'), kabar('trisakti', aktif('laras') ? 'laras' : 'ratna')],
     hots: { radio: { label: 'Radio', text: 'Penyiar radio swasta membacakan nama-nama rumah sakit yang menerima korban.' }, tv: { label: 'Televisi', text: 'TVRI menayangkan pernyataan Panglima. Tidak ada gambar dari Grogol.' }, telepon: { label: 'Telepon', text: 'Kampus-kampus lain menelepon bergantian, meminta satu komando.' }, kawan: { label: 'Wajah kawan', text: 'Bimo menangis. Dimas memukul meja. Mei diam setelah menelepon keluarganya di Glodok.' } },
     choices: () => {
       const opsi = [
-        { t: 'Serukan aksi besar besok pagi', s: 'damar', fx: { massa: 10, nyali: 5, sorotan: 15, ricuh: 2, damar: 1 }, n: 'Selebaran stensil dicetak sampai subuh. Besok pagi kampus akan kosong, dan jalan raya akan penuh.' },
-        { t: 'Malam berkabung: lilin, doa, pernyataan sikap', s: 'fikri', fx: { massa: 10, pengaruh: 5, ricuh: -1, fikri: 1 }, n: 'Kalian menyalakan seribu lilin. Pernyataan sikapmu dikutip tiga koran keesokan harinya.' },
-        { t: 'Konsolidasi lintas kampus: satu komando, satu tuntutan', s: 'ratna', fx: { pengaruh: 15, sorotan: 10, ricuh: -1, ratna: 1 }, n: 'Pukul tiga pagi, perwakilan belasan kampus sepakat pada satu tuntutan: Presiden turun.' },
-        { t: 'Tahan massa di kampus', s: 'yudi', fx: { massa: -10, ricuh: -1, sorotan: -5, yudi: 1 }, n: 'Gerbang kampus tetap tertutup. Sebagian mahasiswa memanjat pagar dan pergi sendiri.' }
+        { t: 'Serukan aksi besar besok pagi', s: 'damar', fx: { kuasa: -8, massa: 10, nyali: 5, sorotan: 15, ricuh: 2, damar: 1 }, n: 'Selebaran stensil dicetak sampai subuh. Besok pagi kampus akan kosong, dan jalan raya akan penuh.' },
+        { t: 'Malam berkabung: lilin, doa, pernyataan sikap', s: 'fikri', fx: { kuasa: -6, massa: 10, pengaruh: 5, ricuh: -1, fikri: 1 }, n: 'Kalian menyalakan seribu lilin. Pernyataan sikapmu dikutip tiga koran keesokan harinya.' },
+        { t: 'Konsolidasi lintas kampus: satu komando, satu tuntutan', s: 'ratna', fx: { kuasa: -8, pengaruh: 15, sorotan: 10, ricuh: -1, ratna: 1, forum: true }, n: 'Pukul tiga pagi, perwakilan belasan kampus sepakat pada satu tuntutan: Presiden turun. Forum lintas kampus terbentuk, dengan simpul di setiap kampus.' },
+        { t: 'Tahan massa di kampus', s: 'yudi', fx: { kuasa: 3, massa: -10, ricuh: -1, sorotan: -5, yudi: 1 }, n: 'Gerbang kampus tetap tertutup. Sebagian mahasiswa memanjat pagar dan pergi sendiri.' }
       ];
       const top = Object.keys(SENIOR).sort((a, b) => S[b] - S[a]).at(0), menang = opsi.find(o => o.s === top);
       return opsi.map(o => ({ t: o.t, go: 'b15_atap', fx: S.pengaruh >= 75 ? o.fx : menang.fx, note: S.pengaruh >= 75 ? o.n : (o === menang ? menang.n : `Kamu mengusulkannya, tapi rapat mengikuti ${SENIOR[top]}. ${menang.n}`) }));
@@ -95,14 +98,14 @@ Object.assign(NODES, {
     text: ['Di balik pagar kampus, dua hal terjadi bersamaan. Warga berdatangan meminta perlindungan, dan beberapa orang di luar pagar memanggil mahasiswa untuk ikut ke pertokoan.'],
     hots: { warga: { label: 'Warga', text: 'Keluarga-keluarga dengan tas seadanya. Seorang ayah menggendong anak yang tertidur.' }, provokator: { label: 'Orang berikat kepala', text: 'Ikat kepala merah yang seragam, jeriken di kaki. Kamu melihat orang yang sama di gerbang lain satu jam lalu.' }, mahasiswa: { label: 'Mahasiswa', text: 'Beberapa mahasiswa mulai memanjat pagar. Mata mereka merah, entah karena asap atau marah.' } },
     rounds: [
-      { text: 'Warga di luar pagar memohon dibukakan gerbang. Mereka tidak diperiksa: kamu hanya memutuskan gerbang dibuka atau tidak.', options: [
-        { t: 'Buka gerbang lebar-lebar', fx: { massa: 10, nyali: 5, sorotan: 5, ricuh: -1, fikri: 1, ratna: 1, posko: true }, note: 'Ratusan orang masuk. Ruang-ruang kuliah berubah menjadi tempat tidur.' },
+      { text: 'Warga di luar pagar memohon dibukakan gerbang. Mereka tidak diperiksa: kamu hanya memutuskan gerbang dibuka atau tidak.', waktu: { detik: 10, label: 'Warga di luar pagar makin terdesak', habis: { fx: { massa: -8, nyali: -5, ricuh: 1, kuasa: 2 }, note: 'Kamu terlalu lama menimbang. Pagar besi roboh didorong dari luar. Warga dan orang-orang tak dikenal masuk bersamaan, dan tidak ada yang bisa memeriksa siapa pun.' } }, options: [
+        { t: 'Buka gerbang lebar-lebar', fx: { kuasa: -2, massa: 10, nyali: 5, sorotan: 5, ricuh: -1, fikri: 1, ratna: 1, posko: true }, note: 'Ratusan orang masuk. Ruang-ruang kuliah berubah menjadi tempat tidur.' },
         { t: 'Buka untuk perempuan, anak, dan orang tua dulu', fx: { massa: 6, posko: true }, note: 'Kamu membuka gerbang kecil. Antrean bergerak pelan tapi tertib.' },
         { t: 'Tutup gerbang, kampus harus aman dulu', fx: { massa: -10, nyali: -5, yudi: 1 }, note: 'Wajah-wajah di balik pagar tidak akan kamu lupakan.' }] },
       { text: s => { if (!s.m.kb) s.m.kb = kabar('sasaran', 'warung'); return `Seseorang di luar pagar berteriak: “${s.m.kb.teks}”`; }, options: [
-        { t: 'Tunjuk orang berikat kepala itu di depan massa', fx: s => ({ ricuh: s.pengaruh >= 35 ? -2 : 0, pengaruh: 5 }), note: s => s.pengaruh >= 35 ? 'Massa mendengarkanmu. Orang-orang berikat kepala itu pergi sebelum dikerumuni.' : 'Tidak banyak yang mendengarkanmu. Beberapa mahasiswa tetap pergi.' },
+        { t: 'Tunjuk orang berikat kepala itu di depan massa', fx: s => ({ kuasa: -2, ricuh: s.pengaruh >= 35 ? -2 : 0, pengaruh: 5 }), note: s => s.pengaruh >= 35 ? 'Massa mendengarkanmu. Orang-orang berikat kepala itu pergi sebelum dikerumuni.' : 'Tidak banyak yang mendengarkanmu. Beberapa mahasiswa tetap pergi.' },
         { t: 'Bujuk mahasiswa dengan orasi', fx: s => ({ ricuh: kutipan() || aktif('dimas') ? -2 : -1 }), note: s => aktif('dimas') ? 'Dimas naik ke atas meja dan membacakan sajak tentang api yang tidak memilih korban. Mereka turun dari pagar.' : 'Kamu bicara sampai suaramu habis. Sebagian besar tetap tinggal.' },
-        { t: 'Biarkan yang mau pergi', fx: { ricuh: 3, massa: -10, nyali: -10 }, note: 'Kemarahan itu tidak memilih sasaran dengan adil. Kamu baru benar-benar paham saat membaca daftar korban beberapa hari kemudian.' }] },
+        { t: 'Biarkan yang mau pergi', fx: { kuasa: 4, ricuh: 3, massa: -10, nyali: -10 }, note: 'Kemarahan itu tidak memilih sasaran dengan adil. Kamu baru benar-benar paham saat membaca daftar korban beberapa hari kemudian.' }] },
       { text: s => aktif('mei') ? 'Telepon sekretariat berdering. Mei, suaranya pecah: keluarganya terjebak di toko mereka di Glodok.' : 'Malam makin larut. Kamu harus memastikan semua orang ada.', options: s => aktif('mei') ? [
         { t: 'Jemput keluarga Mei ke posko kampus', req: s2 => aktif('wahyu') && (aktif('asep') || s2.f.dapurUmum), fx: { nyali: -5, meiAman: true }, note: 'Wahyu menyetir mobil boks lewat jalan-jalan kampung yang ditunjukkan Asep. Subuh, keluarga Mei tidur di ruang kuliah lantai dua.' },
         { t: 'Telepon keluarganya agar mengungsi ke rumah tetangga', fx: { tokoMei: true }, note: 'Toko mereka terbakar malam itu. Keluarga Mei selamat karena disembunyikan tetangga di lantai atas rumahnya.' },
@@ -112,19 +115,20 @@ Object.assign(NODES, {
     done: s => ({ note: 'Fajar datang dengan bau hangus. Kamu belum tidur sejak dua hari lalu.', go: 'b15_putus' })
   },
   b15_putus: {
-    bab: 15, judul: 'Kota Terbakar', waktu: '15 Mei 1998', scene: 'atap', asap: 14, alt: 'Atap kampus, asap di mana-mana',
+    rencana: true, bab: 15, judul: 'Kota Terbakar', waktu: '15 Mei 1998', scene: 'atap', asap: 14, alt: 'Atap kampus, asap di mana-mana',
     text: ['Presidium bertemu di atap gedung, tempat satu-satunya yang sinyal pager-nya masih jelas. Kamu harus memutuskan apa yang dikerjakan barisanmu selama kota terbakar.'],
+    kabar: s => [kabar('kairo', 'warung'), kabar('kairo', s.bekal.includes('radio') ? 'radio' : 'yudi')],
     choices: [
-      { t: 'Perkuat posko perlindungan di kampus', fx: { massa: 10, ricuh: -1, fikri: 1 }, go: 'b16_gerbang', note: 'Mahasiswa kedokteran membuka klinik darurat. Dapur umum memasak untuk warga sampai beras habis.' },
-      { t: 'Tarik semua massa ke kampus dan hitung kepala', fx: { ricuh: -1, massa: 3, yudi: 1 }, go: 'b16_gerbang', note: 'Tidak ada mahasiswa kampusmu yang tercatat ikut menjarah.' },
-      { t: 'Kirim tim dokumentasi untuk mencatat penggerak kerusuhan', fx: { pengaruh: 10, sorotan: 15, ratna: 1, bukti: 'dokumentasi' }, go: 'b16_gerbang', note: 'Tim pulang membawa foto truk dan daftar lokasi. Beberapa bulan kemudian, catatan seperti ini sampai ke Tim Gabungan Pencari Fakta.' },
-      { t: 'Biarkan, ini kemarahan rakyat', fx: { massa: -15, nyali: -10, ricuh: 3 }, go: 'b16_gerbang', note: 'Kamu memalingkan muka. Kamu akan memalingkan muka dari ingatan ini selama bertahun-tahun.' }
+      { t: 'Perkuat posko perlindungan di kampus', fx: { kuasa: -2, massa: 10, ricuh: -1, fikri: 1 }, go: 'b16_gerbang', note: 'Mahasiswa kedokteran membuka klinik darurat. Dapur umum memasak untuk warga sampai beras habis.' },
+      { t: 'Tarik semua massa ke kampus dan hitung kepala', fx: { kuasa: -1, ricuh: -1, massa: 3, yudi: 1 }, go: 'b16_gerbang', note: 'Tidak ada mahasiswa kampusmu yang tercatat ikut menjarah.' },
+      { t: 'Kirim tim dokumentasi untuk mencatat penggerak kerusuhan', fx: { kuasa: -3, pengaruh: 10, sorotan: 15, ratna: 1, bukti: 'dokumentasi' }, go: 'b16_gerbang', note: 'Tim pulang membawa foto truk dan daftar lokasi. Beberapa bulan kemudian, catatan seperti ini sampai ke Tim Gabungan Pencari Fakta.' },
+      { t: 'Biarkan, ini kemarahan rakyat', fx: { kuasa: 5, massa: -15, nyali: -10, ricuh: 3 }, go: 'b16_gerbang', note: 'Kamu memalingkan muka. Kamu akan memalingkan muka dari ingatan ini selama bertahun-tahun.' }
     ]
   },
 
   b16_gerbang: {
-    mode: 'inspect', level: 3, v: 'dpr', bab: 16, judul: 'Gerbang Senayan', waktu: 'Senin, 18 Mei 1998', bulan: '1998-05', scene: 'inspect', alt: 'Gerbang gedung DPR dengan kubah hijau di belakang',
-    text: ['Ribuan mahasiswa menduduki gedung DPR/MPR. Sore ini Ketua DPR meminta Presiden mundur. Kamu menjaga ring pengaman di gerbang.'],
+    mode: 'inspect', level: 3, v: 'dpr', sabar: s => 9 + (yosAda(s) ? 3 : 0), bab: 16, judul: 'Gerbang Senayan', waktu: 'Senin, 18 Mei 1998', bulan: '1998-05', scene: 'inspect', alt: 'Gerbang gedung DPR dengan kubah hijau di belakang',
+    text: s => ['Ribuan mahasiswa menduduki gedung DPR/MPR. Sore ini Ketua DPR meminta Presiden mundur. Kamu menjaga ring pengaman di gerbang.', ...(yosAda(s) ? ['Bang Yos berdiri di sebelahmu, menahan antrean dengan lelucon-lelucon lama dari tahun 1996.'] : [])],
     rules: '<ul class="rules"><li>Kartu presidium bertinta merah, berlaku 18–25 Mei.</li><li>Kode hari ini: <b>Reformasi damai</b>.</li><li>Kartu pers wajib berstempel redaksi.</li></ul>',
     daftar: () => '<div class="sheet"><p><b>Kode hari ini: Reformasi damai</b></p><p>Tinta kartu presidium: merah. Wartawan tanpa stempel redaksi tidak boleh masuk.</p></div>', daftarLabel: 'Pegangan ring pengaman',
     visitors: s => {
@@ -143,7 +147,7 @@ Object.assign(NODES, {
     },
     evaluate: (s, kep, list) => {
       const { fx, lines } = nilaiStandar(kep, list, (t, fx, lines) => {
-        if (t.id === 'peny') { fx.ricuh = 1; lines.push(penyusupAktif() ? `${t.nama} masuk. Malam itu gerbang belakang terbuka sendiri, dan tiga orang asing ditemukan di dapur umum.` : 'Herman masuk, lalu menghilang ke arah gerbang belakang.'); }
+        if (t.id === 'peny') { fx.ricuh = 1; fx.kuasa = 3; lines.push(penyusupAktif() ? `${t.nama} masuk. Malam itu gerbang belakang terbuka sendiri, dan tiga orang asing ditemukan di dapur umum.` : 'Herman masuk, lalu menghilang ke arah gerbang belakang.'); }
         else { lines.push(`${t.nama} ternyata ${t.kebenaran}`); fx.sorotan = (fx.sorotan || 0) + 5; }
       });
       if (kep.tokoh === 'izin') { fx.yudi = 1; fx.fikri = -1; lines.push('Tokoh itu naik panggung. Massa bersorak, lalu sebagian bertanya-tanya untuk apa.'); }
@@ -155,29 +159,30 @@ Object.assign(NODES, {
   },
   b16_bapak: {
     bab: 16, judul: 'Tamu dari Magelang', waktu: 'Selasa, 19 Mei 1998', scene: 'kubah', alt: 'Halaman gedung DPR yang penuh mahasiswa',
-    text: s => [s.f.suratBohong ? 'Bapak berdiri di luar ring, masih memakai seragam Korpri. Ia naik bus semalaman. “Pulang. Sekarang. Bapak sudah tahu semuanya.”' : 'Bapak berdiri di luar ring dengan dua kantong plastik berisi nasi bungkus. “Ibumu yang masak. Bagi ke kawan-kawanmu.”'],
+    text: s => [s.f.suratBohong ? (s.f.bapakDipecat ? 'Bapak berdiri di luar ring dengan kemeja lusuh. Sejak dipecat, ia tidak punya seragam lagi untuk dipakai. Ia naik bus semalaman.' : 'Bapak berdiri di luar ring, masih memakai seragam Korpri. Ia naik bus semalaman.') + ' “Pulang. Sekarang. Bapak sudah tahu semuanya.”' : 'Bapak berdiri di luar ring dengan dua kantong plastik berisi nasi bungkus. “Ibumu yang masak. Bagi ke kawan-kawanmu.”'],
     choices: s => s.f.suratBohong ? [
       { t: 'Ikut Bapak pulang', run: s2 => { s2.f.patahSebab = 'bapak'; s2.ending = 'patah'; }, go: 'akhir', note: 'Kamu mengambil tas dan berjalan keluar ring. Kawan-kawan tidak menahanmu.' },
-      { t: 'Yakinkan Bapak untuk pulang sendiri', req: s2 => s2.nyali >= 40, fx: { nyali: 10, bapak: 1 }, go: 'b16_kubah', note: 'Kamu bicara lama. Akhirnya Bapak menyerahkan uang saku dan berkata, “Telepon Ibumu tiap malam.”' },
+      { t: 'Yakinkan Bapak untuk pulang sendiri', req: s2 => s2.nyali >= 40 || sikap('bapak') === 'hangat', fx: { nyali: 10, bapak: 1 }, go: 'b16_kubah', note: 'Kamu bicara lama. Akhirnya Bapak menyerahkan uang saku dan berkata, “Telepon Ibumu tiap malam.”' },
       { t: 'Minta kawan mengantar Bapak keluar', fx: { nyali: -10, bapak: -1 }, go: 'b16_kubah', note: 'Kamu tidak sanggup menatapnya. Bimo mengantar Bapak ke halte.' }
     ] : [{ t: 'Makan bersama Bapak di tangga gedung', fx: { bapak: 1, nyali: 10, massa: 3 }, go: 'b16_kubah', note: 'Bapak duduk di tangga gedung DPR, di antara ratusan mahasiswa, dan makan nasi bungkus bersamamu. Ia tidak bicara banyak. Ia tidak perlu.' }]
   },
   b16_kubah: {
     mode: 'logistik', pendudukan: true, bab: 16, judul: 'Logistik Pendudukan', waktu: '19 Mei 1998', scene: 'kubah', alt: 'Atap kubah hijau penuh mahasiswa',
-    text: ['Ribuan mahasiswa tidur di tangga, di lobi, dan di atap kubah hijau. Warga Senayan mengirim nasi bungkus berkarung-karung. Kamu mengatur belanja untuk dua hari ke depan.'],
+    text: s => ['Ribuan mahasiswa tidur di tangga, di lobi, dan di atap kubah hijau. Warga Senayan mengirim nasi bungkus berkarung-karung. Kamu mengatur belanja untuk dua hari ke depan.'].concat(kal(s, 'ibu') >= 0.5 ? ['Siang itu, ibu-ibu pasar yang dulu memasak bersamamu di dapur umum datang membawa dua bakul nasi dan termos teh.'] : []),
     massaBenar: s => 2000 * (0.5 + s.massa / 100),
     next: 'b16_konflik'
   },
   b16_konflik: {
-    bab: 16, judul: 'Gerbang Senayan', waktu: '19 Mei 1998 · malam', scene: 'kubah', alt: 'Atap kubah hijau',
+    rencana: true, bab: 16, judul: 'Gerbang Senayan', waktu: '19 Mei 1998 · malam', scene: 'kubah', alt: 'Atap kubah hijau',
     enter: s => s.f.rahasiaSimpan && s.ratna >= 1 && !s.f.rahasiaTerbongkar ? { massa: -30, rahasiaTerbongkar: true } : {},
-    text: s => [s.f.rahasiaTerbongkar && s.f.rahasiaSimpan ? 'Kak Ratna memanggilmu ke depan presidium. Ia membacakan catatan interogasi yang didapat LBH. Namamu ada di situ, di samping semua yang kamu bocorkan.' : 'Presidium berkumpul di ruang fraksi yang kosong.', 'Radio memberitakan Presiden bertemu tokoh-tokoh agama dan menjanjikan reformasi bertahap. Presidium terbelah.'],
+    text: s => [(s.kuasa ?? 100) > 15 ? 'Radio: beberapa tokoh mulai bilang bersedia bergabung dengan Komite Reformasi yang ditawarkan Presiden.' : 'Radio: satu per satu tokoh menolak bergabung dengan Komite Reformasi yang ditawarkan Presiden.', s.f.rahasiaTerbongkar && s.f.rahasiaSimpan ? 'Kak Ratna memanggilmu ke depan presidium. Ia membacakan catatan interogasi yang didapat LBH. Namamu ada di situ, di samping semua yang kamu bocorkan.' : 'Presidium berkumpul di ruang fraksi yang kosong.', 'Radio memberitakan Presiden bertemu tokoh-tokoh agama dan menjanjikan reformasi bertahap. Presidium terbelah.'],
     kabar: s => [kabar('mundur', 'yudi'), kabar('mundur', 'damar')],
     choices: [
-      { t: 'Atur logistik dan ring pengaman per kampus', fx: { massa: 10, pengaruh: 8, ricuh: -1, ratna: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Dua penyusup tanpa kartu digiring keluar sebelum sempat membuat onar.' },
-      { t: 'Larang elite dan partai naik panggung', fx: { massa: 10, pengaruh: 5, fikri: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Seorang tokoh terkenal turun panggung dengan muka masam. Massa bersorak.' },
-      { t: 'Buka dialog dengan fraksi dan tokoh', fx: { pengaruh: 12, massa: -5, yudi: 2 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Kamu pulang membawa nomor telepon tiga orang penting. Beberapa kawan mulai memanggilmu “Pak Dewan”.' },
-      { t: 'Tolak semua negosiasi dan menginap sampai Presiden turun', fx: { massa: 8, nyali: -5, sorotan: 5, damar: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Malam kedua hujan turun. Spanduk dijadikan selimut. Tidak ada yang pulang.' }
+      { t: 'Atur logistik dan ring pengaman per kampus', fx: { kuasa: -5, massa: 10, pengaruh: 8, ricuh: -1, ratna: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Dua penyusup tanpa kartu digiring keluar sebelum sempat membuat onar.' },
+      { t: 'Larang elite dan partai naik panggung', fx: { kuasa: -5, massa: 10, pengaruh: 5, fikri: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Seorang tokoh terkenal turun panggung dengan muka masam. Massa bersorak.' },
+      { t: 'Buka dialog dengan fraksi dan tokoh', fx: { kuasa: -3, pengaruh: 12, massa: -5, yudi: 2 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Kamu pulang membawa nomor telepon tiga orang penting. Beberapa kawan mulai memanggilmu “Pak Dewan”.' },
+      { t: 'Bicara dengan perwira marinir yang berjaga di gerbang', fx: { kuasa: -4, ricuh: -1, pengaruh: 4, nyali: 3 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Perwira muda itu mendengarkanmu, lalu berbalik ke anak buahnya. Kamu mendengar ia berpesan agar tidak ada yang mengarahkan senjata ke mahasiswa.' },
+      { t: 'Tolak semua negosiasi dan menginap sampai Presiden turun', fx: { kuasa: -6, massa: 8, nyali: -5, sorotan: 5, damar: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Malam kedua hujan turun. Spanduk dijadikan selimut. Tidak ada yang pulang.' }
     ]
   },
   b16_penyusup: {
@@ -191,18 +196,33 @@ Object.assign(NODES, {
   },
   b16_amplop: {
     bab: 16, judul: 'Amplop Cokelat', waktu: 'Rabu, 20 Mei 1998 · malam', scene: 'lorongDpr', enter: { nyali: -5 }, alt: 'Laki-laki bersafari menyodorkan amplop cokelat',
-    text: ['Rencana aksi besar di Monas hari ini batal setelah tentara menutup kawasan itu.', 'Malamnya, seorang laki-laki bersafari menemuimu di lorong. Ia menyebut nama kampung Bapak dengan benar, lalu menyodorkan amplop cokelat. “Bubarkan massa besok pagi. Beasiswa ke luar negeri, pekerjaan, keluarga aman.”'],
+    text: s => ['Rencana aksi besar di Monas hari ini batal setelah tentara menutup kawasan itu.', (s.f.hendraKenal ? 'Malamnya, Hendra menemuimu di lorong. Kali ini ia memakai safari dan lencana tanpa nama, dan ia menyapamu seperti kenalan lama.' : 'Malamnya, seorang laki-laki bersafari menemuimu di lorong.') + ' Ia menyebut nama kampung Bapak dengan benar, lalu menyodorkan amplop cokelat. “Bubarkan massa besok pagi. Beasiswa ke luar negeri, pekerjaan, keluarga aman.”'],
     hots: { safari: { label: 'Laki-laki bersafari', text: 'Lencana kecil di kerahnya, tanpa nama.' }, amplop: { label: 'Amplop', text: 'Tebal. Terlalu tebal untuk sekadar uang transpor.' } },
     choices: [
-      { t: 'Tolak, lalu umumkan tawaran itu di depan massa', fx: { massa: 12, sorotan: 15, nyali: 5, damar: 1 }, go: 'b17_lobi', note: 'Kamu mengangkat amplop itu di atas panggung tanpa membukanya. Sorakan massa terdengar sampai ke Jalan Gatot Subroto.' },
-      { t: 'Tolak dengan tenang, lalu lapor ke presidium', fx: { nyali: 3, pengaruh: 3, ratna: 1 }, go: 'b17_lobi', note: 'Presidium menambah penjaga di sekitarmu dan memindahkan Ibu ke rumah saudara malam itu juga.' },
-      { t: 'Terima demi keluarga', fx: { massa: -10, suap: true, suapKiriman: true, yudi: 1 }, go: 'b17_lobi', note: 'Amplop itu terasa berat di tasmu. Sampai pagi, kamu belum tahu apakah akan menjalankan bagianmu dari kesepakatan itu.' }
+      { t: 'Tolak, lalu umumkan tawaran itu di depan massa', fx: { kuasa: -6, massa: 12, sorotan: 15, nyali: 5, damar: 1 }, go: s => orbaBertahan(s) ? 'b17_komite' : 'b17_lobi', note: 'Kamu mengangkat amplop itu di atas panggung tanpa membukanya. Sorakan massa terdengar sampai ke Jalan Gatot Subroto.' },
+      { t: 'Tolak dengan tenang, lalu lapor ke presidium', fx: { kuasa: -3, nyali: 3, pengaruh: 3, ratna: 1 }, go: s => orbaBertahan(s) ? 'b17_komite' : 'b17_lobi', note: 'Presidium menambah penjaga di sekitarmu dan memindahkan Ibu ke rumah saudara malam itu juga.' },
+      { t: 'Terima demi keluarga', fx: { kuasa: 10, massa: -10, suap: true, suapKiriman: true, yudi: 1 }, go: s => orbaBertahan(s) ? 'b17_komite' : 'b17_lobi', note: 'Amplop itu terasa berat di tasmu. Sampai pagi, kamu belum tahu apakah akan menjalankan bagianmu dari kesepakatan itu.' }
     ]
   },
   b17_lobi: {
     bab: 17, judul: 'Kamis Pagi', waktu: 'Kamis, 21 Mei 1998', scene: 'lobi', alt: 'Ratusan mahasiswa menatap televisi tabung di lobi DPR',
     enter: s => { if (s.f.meiPergi && s.kader.mei) s.kader.mei = 'pergi'; for (const [k, st] of Object.entries(s.kader)) if (st === 'ditangkap') s.kader[k] = 'aktif'; return {}; },
     text: s => ['Kamu berdesakan bersama ratusan mahasiswa di depan televisi tabung di atas meja satpam. Pukul sembilan pagi, Presiden membacakan pernyataan berhenti dari jabatannya, dan Wakil Presiden diambil sumpahnya.', 'Gedung pecah oleh teriakan, tangis, dan sujud syukur.' + (s.f.suap ? ' Kamu ikut bersorak, dengan amplop cokelat masih di tasmu.' : ''), 'Status DPO-mu dicabut diam-diam beberapa minggu kemudian. Tidak ada yang meminta maaf.'],
-    choices: [{ t: 'Pulang dan tidur untuk pertama kalinya dalam seminggu', fx: { nyali: 15 }, go: 'b18_semanggi' }]
+    choices: [{ t: 'Pulang dan tidur untuk pertama kalinya dalam seminggu', fx: { nyali: 15 }, go: 'b17_tapol' }]
+  },
+  b17_komite: {
+    bab: 17, judul: 'Kamis Pagi', waktu: 'Kamis, 21 Mei 1998', scene: 'lobi', alt: 'Ratusan mahasiswa menatap televisi tabung di lobi DPR',
+    text: s => s.f.diLuar ? ['Pukul empat pagi waktu Jenewa, Presiden muncul di televisi penginapan. Ia tidak berhenti. Ia mengumumkan Komite Reformasi dan pemilu ulang yang akan ia pimpin sendiri.', 'Kawan-kawan di Jakarta tidak mengangkat telepon. Gedung DPR dikosongkan siang itu.'] : ['Pukul sembilan pagi, Presiden muncul di televisi tabung di atas meja satpam. Ia tidak berhenti. Ia mengumumkan Komite Reformasi dan pemilu ulang yang akan ia pimpin sendiri.', 'Tidak ada sorakan. Siang itu aparat mengosongkan gedung, dan tidak cukup banyak orang di luar pagar untuk menahan mereka.'],
+    hots: { tv: { label: 'Televisi', text: 'Para menteri berdiri di belakang Presiden. Beberapa wajah yang dua hari lalu menolak bergabung sekarang ikut tersenyum.' } },
+    choices: [{ t: s => s.f.diLuar ? 'Matikan televisi' : 'Keluar dari gedung bersama barisan terakhir', run: s => { s.ending = 'orba'; }, go: 'akhir', note: s => s.f.diLuar ? 'Kamu memperpanjang visamu hari itu juga.' : 'Kalian berjalan keluar dengan spanduk digulung. Di gerbang, petugas mencatat nama setiap orang.' }]
+  },
+  b17_tapol: {
+    bab: 17, judul: 'Amnesti untuk Semua', waktu: 'Juni 1998', bulan: '1998-06', scene: 'sekre', v: 'siang', alt: 'Sekretariat yang kembali ramai',
+    text: ['Pemerintah baru mulai membebaskan tahanan politik satu per satu sejak akhir Mei. Seorang tahanan yang kamu kenal dari LBH ditawari bebas lebih dulu. Ia menolak keluar sendirian.', '“Amnesti untuk semua, atau tidak sama sekali,” tulisnya dari sel. Ia memintamu ikut mengkampanyekannya.'],
+    hots: { surat: { label: 'Surat dari sel', text: 'Tulisannya kecil-kecil di kertas bungkus rokok. Di bawahnya ada daftar dua puluh nama.' } },
+    choices: [
+      { t: 'Kampanyekan amnesti untuk semua tahanan politik', fx: { pengaruh: 5, tekanan: 5, sorotan: 5, ratna: 1 }, go: 'b18_semanggi', note: 'Kalian membentangkan daftar nama itu di depan gedung Kejaksaan setiap Senin. Satu per satu, nama di daftar itu dicoret karena bebas.' },
+      { t: 'Kembali kuliah dan mengejar ketertinggalan', fx: { ipk: 0.2, nyali: 5 }, go: 'b18_semanggi', note: 'Kamu duduk lagi di bangku kuliah. Dosen menyebut namamu saat absen, dan kamu hampir lupa caranya menjawab.' }
+    ]
   }
 });

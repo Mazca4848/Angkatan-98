@@ -135,7 +135,7 @@ function sKos(S, n) {
   for (let i = 0; i <= 7; i++) grid += `M${(44 + i * cw).toFixed(1)} 132V282`;
   for (let j = 0; j <= 5; j++) grid += `M44 ${132 + j * 30}H208`;
   cal += `<path d="${grid}" stroke="${K}" stroke-width="1.2"/>`;
-  ((S.m && S.m.slots) || []).forEach((_, i) => { for (const c of [2 * i, 2 * i + 1]) { const x = 44 + c * cw, y = 192; cal += `<path d="M${x + 4} ${y + 5}L${x + cw - 4} ${y + 25}M${x + cw - 4} ${y + 5}L${x + 4} ${y + 25}" stroke="${R}" stroke-width="3"/>`; } });
+  ((S.m && S.m.slots) || []).filter(Boolean).forEach((_, c) => { { const x = 44 + c * cw, y = 192; cal += `<path d="M${x + 4} ${y + 5}L${x + cw - 4} ${y + 25}M${x + cw - 4} ${y + 5}L${x + 4} ${y + 25}" stroke="${R}" stroke-width="3"/>`; } });
   o += hot('kalender', 'Kalender dinding', cal);
   o += hot('pintu', 'Pintu ke lorong', `<rect x="244" y="76" width="70" height="344" fill="${K}"/><path d="M252 84 L300 96 L300 412 L252 420Z" fill="${P2}" stroke="${K}" stroke-width="3"/>` + (n.dering ? `<path d="M262 200 l-16 -10 M262 220 h-20 M262 240 l-16 10" stroke="${R}" stroke-width="4"/>` : ''));
   const motor = S.sorotan >= 75 ? 3 : S.sorotan >= 50 ? 2 : S.sorotan >= 25 ? 1 : 0;
@@ -211,12 +211,21 @@ function sToko(S) {
   return o + hot('ibu', 'Ibu-ibu di antrean', person(C.warga1, 140, 260, .9) + person(C.ibuKos, 360, 280, .85));
 }
 
-function sPapan(S) {
+function sPapan(S, n) {
   let o = wall(131) + floor(420, 132) + `<rect x="60" y="40" width="840" height="320" fill="#26302a" stroke="${K}" stroke-width="12"/>`;
-  const route = (S.m && S.m.pick && S.m.pick.rute) || '';
-  o += hot('peta', 'Peta di papan tulis', `<rect x="110" y="200" width="120" height="80" fill="none" stroke="${P}" stroke-width="3"/><text x="170" y="246" text-anchor="middle" ${MONO} font-size="16" fill="${P}">KAMPUS</text><rect x="700" y="80" width="150" height="70" fill="none" stroke="${P}" stroke-width="3"/><text x="775" y="122" text-anchor="middle" ${MONO} font-size="16" fill="${P}">SENAYAN</text><path d="M230 240 H700 M500 240 V110 H700" stroke="${P2}" stroke-width="2" stroke-dasharray="8 8" fill="none"/>`
-    + [[420, 240], [600, 110], [560, 300]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="20" fill="none" stroke="${R}" stroke-width="4"/>`).join('')
-    + (route === 'utama' ? `<path d="M230 240 H700 V150" stroke="${P}" stroke-width="5" fill="none"/>` : route === 'kampung' ? `<path d="M230 260 Q400 330 560 300 Q660 280 720 150" stroke="${P}" stroke-width="5" fill="none"/>` : route === 'tetangga' ? `<path d="M230 220 Q360 120 500 110 H700" stroke="${P}" stroke-width="5" fill="none"/>` : ''));
+  const st = n.steps && n.steps[S.m.step], gambar = !!st && st.type === 'peta' && !S.ui.last && longMarch();
+  const rute = gambar ? S.m.rute : Array.isArray(S.f.rute) ? S.f.rute : [], bisa = gambar ? langkahBisa() : [];
+  o += hot('peta', 'Peta di papan tulis', RUAS.map(([a, b]) => `<path d="M${PETA[a].x} ${PETA[a].y} L${PETA[b].x} ${PETA[b].y}" stroke="${P2}" stroke-width="2" stroke-dasharray="8 8"/>`).join('')
+    + Object.values(PETA).map(p => p.jenis === 'pos' ? `<circle cx="${p.x}" cy="${p.y}" r="26" fill="none" stroke="${R}" stroke-width="4"/>` : '').join('')
+    + Object.values(PETA).map(p => p.jenis ? `<text x="${p.x + 30}" y="${p.y - 22}" ${MONO} font-size="13" fill="${P2}">${JENIS_PETA[p.jenis]}</text>` : '').join(''));
+  if (rute.length > 1) o += `<path d="M${rute.map(id => `${PETA[id].x} ${PETA[id].y}`).join(' L')}" stroke="${P}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+  for (const [id, p] of Object.entries(PETA)) {
+    const di = rute.includes(id), boleh = bisa.includes(id), kotak = id === 'kampus' || p.ujung;
+    let g = kotak ? `<rect x="${p.x - 62}" y="${p.y - 22}" width="124" height="44" fill="${di ? P : '#26302a'}" stroke="${boleh ? P : P2}" stroke-width="${boleh ? 5 : 3}"/><text x="${p.x}" y="${p.y + 6}" text-anchor="middle" ${MONO} font-size="16" fill="${di ? K : P}">${p.nama.toUpperCase()}</text>`
+      : `<circle cx="${p.x}" cy="${p.y}" r="${boleh ? 17 : 12}" fill="${di ? P : '#26302a'}" stroke="${boleh ? P : P2}" stroke-width="${boleh ? 5 : 3}"/>`;
+    if (gambar && (di || boleh)) g = `<g class="titik" data-titik="${id}" tabindex="0" role="button" aria-label="${p.nama}"><circle cx="${p.x}" cy="${p.y}" r="44" fill="transparent"/>${g}</g>`;
+    o += g;
+  }
   o += table(160, 420, 640) + hot('kartu', 'Kartu kader', [0, 1, 2, 3, 4].map(i => `<rect x="${200 + i * 110}" y="380" width="80" height="44" fill="${P}" stroke="${K}" stroke-width="3" transform="rotate(${i % 2 ? 4 : -4} ${240 + i * 110} 402)"/>`).join(''));
   return o + hot('daftar', 'Daftar periksa Kak Ratna', `<rect x="800" y="300" width="120" height="110" fill="${P}" stroke="${K}" stroke-width="3"/><path d="M816 324h80M816 346h70M816 368h84M816 390h60" stroke="${K}" stroke-width="2.5"/>`);
 }
