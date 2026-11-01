@@ -225,10 +225,10 @@ Object.assign(NODES, {
       { id: 'isu', label: 'Isu utama aksi', options: isuOpts },
       { id: 'frame', label: 'Bingkai', options: () => FRAMING },
       { id: 'bentuk', label: 'Bentuk aksi', options: () => [
-        { v: 'mimbar', t: 'Mimbar di dalam kampus', d: 'di dalam pagar kampus' },
-        { v: 'duduk', t: 'Aksi duduk di gerbang', d: 'menghadang di gerbang kampus' },
-        { v: 'jalan', t: 'Long march ke jalan raya', d: 'turun ke jalan raya' },
-        { v: 'dprd', t: 'Long march ke DPRD', d: 'berjalan sampai gedung DPRD' },
+        { v: 'mimbar', kel: 'Di dalam kampus', t: 'Mimbar di dalam kampus', d: 'di dalam pagar kampus' },
+        { v: 'duduk', kel: 'Di dalam kampus', t: 'Aksi duduk di gerbang', d: 'menghadang di gerbang kampus' },
+        { v: 'jalan', kel: 'Long march', t: 'Long march ke jalan raya', d: 'turun ke jalan raya' },
+        { v: 'dprd', kel: 'Long march', t: 'Long march ke DPRD', d: 'berjalan sampai gedung DPRD' },
         { v: 'delegasi', t: 'Delegasi tanpa massa', d: 'beberapa orang menemui pejabat' },
         { v: 'kamuflase', t: 'Aksi kamuflase: bazar sembako murah', d: 'singkat, membaur, tidak terlihat seperti demo' }] },
       { id: 'ajak', label: 'Cara mengajak', options: () => [
@@ -302,9 +302,9 @@ Object.assign(NODES, {
     rounds: [
       { text: 'Komandan lapangan berteriak lewat pengeras suara: “Bubar! Ini perintah!”', options: [
         { t: 'Orasi: bacakan tuntutan keras-keras', kata: 'orasi', fx: s => s.m.kataOk ? { pengaruh: 5, sorotan: 5, massa: kutipan() ? 6 : 4 } : { pengaruh: 1, sorotan: 5 }, marah: s => s.m.kataOk ? 5 : 12, note: s => s.m.kataOk ? (kutipan() ? 'Kamu mengutip buku yang kamu baca di sekretariat. Barisan di belakang bersorak.' : 'Barisan paling belakang mengulang tuntutanmu.') : 'Barisan di belakang saling pandang. Komandan tersenyum tipis.' },
-        { t: 'Negosiasi dengan komandan', kata: 'nego', fx: s => s.m.kataOk ? { yudi: 1, pengaruh: 3 } : { nyali: -3 }, marah: s => s.m.kataOk ? -(15 + 3 * paham('p4')) : 10, note: s => s.m.kataOk ? 'Komandan memberi waktu sampai pukul tiga. Setelah itu, katanya, ia tidak bertanggung jawab.' : 'Komandan memotong kalimatmu dan berbalik ke pasukannya.' },
+        { t: 'Negosiasi dengan komandan', kel: 'Hadapi aparat secara langsung', kata: 'nego', fx: s => s.m.kataOk ? { yudi: 1, pengaruh: 3 } : { nyali: -3 }, marah: s => s.m.kataOk ? -(15 + 3 * paham('p4')) : 10, note: s => s.m.kataOk ? 'Komandan memberi waktu sampai pukul tiga. Setelah itu, katanya, ia tidak bertanggung jawab.' : 'Komandan memotong kalimatmu dan berbalik ke pasukannya.' },
         { t: 'Perintahkan massa duduk', marah: -10, fx: { fikri: 1, ricuh: -1 }, note: 'Ratusan orang duduk di aspal. Barisan tameng berhenti maju.' },
-        { t: 'Bagikan bunga kepada barisan tameng', req: s => s.nyali >= 40, marah: -25, fx: { kuasa: -2, fikri: 1, damar: -1, tekanan: 3 }, note: 'Kamu berjalan sendirian ke barisan tameng dan menyelipkan setangkai bunga di sela tameng. Seorang prajurit muda menunduk. Di belakangmu, anak-anak Damar menyebutmu lembek.' },
+        { t: 'Bagikan bunga kepada barisan tameng', kel: 'Hadapi aparat secara langsung', req: s => s.nyali >= 40, marah: -25, fx: { kuasa: -2, fikri: 1, damar: -1, tekanan: 3 }, note: 'Kamu berjalan sendirian ke barisan tameng dan menyelipkan setangkai bunga di sela tameng. Seorang prajurit muda menunduk. Di belakangmu, anak-anak Damar menyebutmu lembek.' },
         { t: 'Maju selangkah demi selangkah', marah: 20, fx: { damar: 1, ricuh: 1, sorotan: 5 }, note: 'Jarak menyempit. Kamu bisa melihat nomor di helm prajurit paling depan.' }] },
       { text: s => s.f.provokatorLolos ? 'Sebuah botol melayang dari belakang barisan dan pecah di depan tameng. Bau bensin menyebar.' : pick(['Hujan turun deras. Spanduk basah dan berat.', 'Wartawan berdatangan dengan kamera besar.']), options: [
         { t: 'Duduk dan tahan barisan, jangan membalas', marah: s => s.f.provokatorLolos ? 10 : -5, fx: s => ({ ricuh: s.f.provokatorLolos ? 0 : -1, massa: (s.siap.air || 0) >= 0.8 ? 6 : 2, nyali: -5 }), note: s => ((s.siap.air || 0) >= 0.8 ? 'Air minum cukup. Barisan bertahan lama di bawah terik.' : 'Air minum habis sebelum siang. Beberapa peserta pingsan.') + (s.f.pos && s.f.pos.tali ? ' Tali massa menahan barisan tetap rapat.' : '') },
@@ -363,8 +363,8 @@ Object.assign(NODES, {
       { t: 'Bawa ke publik: konferensi pers, LBH, posko pengaduan', fx: s => ({ kuasa: -3, sorotan: 20, massa: 10 + 5 * (s.f.buktiDamar || 0), pengaruh: 10, ratna: 1, yudi: -1, damarPublik: true }), run: s => { s.f.namaDiKoran = (s.f.namaDiKoran || 0) + 1; }, go: 'b10_panggilan', note: 'Nama Bang Damar masuk koran, dan namamu juga. Kamu tahu yang kedua berbahaya. Yang pertama mungkin menyelamatkan nyawanya.' },
       { t: 'Doa bersama dan mimbar duka di masjid kampus', fx: { kuasa: -2, massa: 12, sorotan: 8, nyali: 5, fikri: 1, damarPublik: true }, go: 'b10_panggilan', note: 'Ribuan lilin menyala di pelataran masjid. Wartawan datang meski tidak diundang. Foto Bang Damar dipajang di tangga.' },
       { t: 'Cari diam-diam lewat jaringan', fx: { kuasa: -1, sorotan: 3, nyali: -8, pengaruh: 3 }, go: 'b10_panggilan', note: 'Jaringanmu menemukan jejak sampai sebuah kompleks berpagar tinggi di pinggir kota. Setelah itu jejaknya putus.' },
-      { t: 'Dampingi keluarga Damar melapor orang hilang', d: 'ke polisi, LBH, dan Komnas HAM', fx: { kuasa: -3, sorotan: 12, massa: 6, ratna: 1, damarLapor: true }, go: 'b10_panggilan', note: 'Petugas jaga menulis laporan dengan malas. Di LBH, berkasnya dibuat rangkap tiga. Di Komnas HAM, ibu Bang Damar menandatangani formulir dengan tangan gemetar. Namamu tercatat sebagai pendamping.' },
-      { t: 'Minta Mas Yudi bertanya ke kenalannya di Kodam', fx: { sorotan: -5, massa: -8, yudi: 1, ratna: -1 }, go: 'b10_panggilan', note: 'Jawabannya sopan dan kosong: “Tidak ada data yang bersangkutan.” Mas Yudi menyarankan kalian menunggu.' }
+      { t: 'Dampingi keluarga Damar melapor orang hilang', kel: 'Lewat jalur resmi', d: 'ke polisi, LBH, dan Komnas HAM', fx: { kuasa: -3, sorotan: 12, massa: 6, ratna: 1, damarLapor: true }, go: 'b10_panggilan', note: 'Petugas jaga menulis laporan dengan malas. Di LBH, berkasnya dibuat rangkap tiga. Di Komnas HAM, ibu Bang Damar menandatangani formulir dengan tangan gemetar. Namamu tercatat sebagai pendamping.' },
+      { t: 'Minta Mas Yudi bertanya ke kenalannya di Kodam', kel: 'Lewat jalur resmi', fx: { sorotan: -5, massa: -8, yudi: 1, ratna: -1 }, go: 'b10_panggilan', note: 'Jawabannya sopan dan kosong: “Tidak ada data yang bersangkutan.” Mas Yudi menyarankan kalian menunggu.' }
     ]
   },
   b10_panggilan: {
@@ -389,13 +389,13 @@ Object.assign(NODES, {
     budget: s => 3 + (s.yudi >= 3 ? 2 : 0) + (yosAda(s) ? 1 : 0) - (s.f.intelMasuk ? 1 : 0) + (s.f.dpoResmi ? 1 : 0) + (s.f.kurirSiap ? 1 : 0),
     detik: s => 18 + (s.yudi >= 3 ? 6 : 0) + (yosAda(s) ? 4 : 0) + (s.f.dpoResmi ? 4 : 0) + (s.f.kurirSiap ? 4 : 0) - (s.f.intelMasuk ? 4 : 0),
     options: [
-      { id: 'plafon', t: s => `Dorong ${isiMap(s)} ke atas plafon`, d: 'celah di balik balok kayu', req: belumDiurus, run: s => { const isi = cap(isiMap(s)); sembunyikanMap(s, 'plafon'); return `${isi} kamu dorong ke atas plafon, di balik balok kayu.`; } },
-      { id: 'karung', t: s => `Benamkan ${isiMap(s)} di karung beras`, d: 'cepat, tapi karungnya di dapur', req: belumDiurus, run: s => { const isi = cap(isiMap(s)); if (Math.random() < 0.5) { sembunyikanMap(s, 'karung'); return `${isi} kamu benamkan dalam-dalam di karung beras.`; } s.f.dokDitemukan = true; return `${isi} kamu benamkan di karung beras, tapi ujung mapnya masih mencuat.`; } },
-      { id: 'bawa', t: 'Masukkan map bukti ke tasmu', d: 'di bawah baju ganti', req: s => s.bukti.length > 0 && belumDiurus(s), fx: { bawaBukti: true }, note: s => `${s.bukti.length} bukti kamu selipkan di bawah baju ganti di tasmu.` },
+      { kel: 'Sembunyikan barang', id: 'plafon', t: s => `Dorong ${isiMap(s)} ke atas plafon`, d: 'celah di balik balok kayu', req: belumDiurus, run: s => { const isi = cap(isiMap(s)); sembunyikanMap(s, 'plafon'); return `${isi} kamu dorong ke atas plafon, di balik balok kayu.`; } },
+      { kel: 'Sembunyikan barang', id: 'karung', t: s => `Benamkan ${isiMap(s)} di karung beras`, d: 'cepat, tapi karungnya di dapur', req: belumDiurus, run: s => { const isi = cap(isiMap(s)); if (Math.random() < 0.5) { sembunyikanMap(s, 'karung'); return `${isi} kamu benamkan dalam-dalam di karung beras.`; } s.f.dokDitemukan = true; return `${isi} kamu benamkan di karung beras, tapi ujung mapnya masih mencuat.`; } },
+      { kel: 'Sembunyikan barang', id: 'bawa', t: 'Masukkan map bukti ke tasmu', d: 'di bawah baju ganti', req: s => s.bukti.length > 0 && belumDiurus(s), fx: { bawaBukti: true }, note: s => `${s.bukti.length} bukti kamu selipkan di bawah baju ganti di tasmu.` },
       { id: 'bakar', t: 'Bakar daftar anggota', d: 'di bak mandi', req: s => !s.f.dokAman, fx: { daftarDibakar: true }, note: 'Kertas-kertas itu kamu bakar di bak mandi. Asapnya membuat matamu perih.' },
-      { id: 'stensil', t: 'Sembunyikan mesin stensil', d: 'digotong ke kamar mandi', fx: { stensilAman: true }, note: 'Kamu dan seorang kawan menggotong mesin stensil ke kamar mandi dan menutupinya dengan tikar.' },
-      { id: 'buku', t: 'Sembunyikan buku terlarang', d: 'diselipkan di balik lemari', req: s => s.buku.dikos.length > 0, fx: { bukuDititip: true }, run: s => { s.buku.dikos = []; return 'Buku-buku terlarang kamu selipkan di balik lemari.'; } },
-      ...Object.keys(KADER).map(k => ({ id: 'kabur_' + k, t: `Suruh ${KADER[k].nama} kabur lewat jendela belakang`, req: s => aktif(k), run: s => { s.f['lolos_' + k] = true; return `${KADER[k].nama} melompat jendela dan menghilang di gang.`; } }))
+      { kel: 'Sembunyikan barang', id: 'stensil', t: 'Sembunyikan mesin stensil', d: 'digotong ke kamar mandi', fx: { stensilAman: true }, note: 'Kamu dan seorang kawan menggotong mesin stensil ke kamar mandi dan menutupinya dengan tikar.' },
+      { kel: 'Sembunyikan barang', id: 'buku', t: 'Sembunyikan buku terlarang', d: 'diselipkan di balik lemari', req: s => s.buku.dikos.length > 0, fx: { bukuDititip: true }, run: s => { s.buku.dikos = []; return 'Buku-buku terlarang kamu selipkan di balik lemari.'; } },
+      ...Object.keys(KADER).map(k => ({ id: 'kabur_' + k, kel: 'Selamatkan kawan', t: `Suruh ${KADER[k].nama} kabur lewat jendela belakang`, req: s => aktif(k), run: s => { s.f['lolos_' + k] = true; return `${KADER[k].nama} melompat jendela dan menghilang di gang.`; } }))
     ],
     after: s => {
       const note = [], fx = {};

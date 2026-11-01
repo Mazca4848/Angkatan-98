@@ -116,7 +116,7 @@ MODES.form = {
     }
     const opts = val(st.options).filter(o => !o.req || o.req(S));
     if (st.multi) return h + `<div class="ask"><p class="label">${st.label} (pilih ${st.multi})</p><div class="acts">${opts.map(o => `<button type="button" class="chip" data-a="tog" data-v="${o.v}" aria-pressed="${S.m.multi.includes(o.v)}"${o.dis && o.dis(S) ? ' disabled' : ''}><b>${o.t}</b>${o.d ? ` <small>${o.d}</small>` : ''}</button>`).join('')}</div><button type="button" class="btn" data-a="ok"${S.m.multi.length !== st.multi ? ' disabled' : ''}>Pilih</button></div>`;
-    return h + `<div class="ask"><p class="label">${st.label}</p><ol class="choices">${opts.map((o, k) => `<li><button type="button" class="choice" data-a="opt" data-v="${o.v}"${o.dis && o.dis(S) ? ' disabled' : ''}><span class="key" aria-hidden="true">${'ABCDEFGH'[k]}</span><span>${o.t}${o.d ? `<small>${o.d}</small>` : ''}${o.dis && o.dis(S) ? `<small class="bad">${o.alasan || 'belum bisa dipilih'}</small>` : ''}</span></button></li>`).join('')}</ol></div>`;
+    return h + pilihanHTML(opts.map(o => ({ a: 'opt', v: o.v, t: o.t, d: o.d, dis: o.dis && o.dis(S), alasan: o.alasan, kel: o.kel })), st.label);
   },
   act(n, a, v) {
     if (S.ui.last) return;
@@ -162,7 +162,7 @@ MODES.rounds = {
     if (S.m.kata) return h + kataHTML(S.m.kata);
     if (S.m.res) return h + `<section class="result" tabindex="-1"><p class="label">Kamu memilih</p><p class="pick">${S.m.res.pick}</p>${[].concat(S.m.res.note).map(p => `<p>${p}</p>`).join('')}${deltasHTML(S.m.res.deltas)}<button type="button" class="btn" data-a="rn">Lanjut</button></section>`;
     const opts = val(R.options).map((o, i) => [o, i]).filter(([o]) => !o.req || o.req(S));
-    return h + `<div class="prose"><p>${val(R.text)}</p></div>${R.waktu ? waktuHTML(R.waktu.label) : ''}<div class="ask"><ol class="choices">${opts.map(([o, i], k) => `<li><button type="button" class="choice" data-a="opt" data-v="${i}"><span class="key" aria-hidden="true">${'ABCDEF'[k]}</span><span>${val(o.t)}${o.d ? `<small>${val(o.d)}</small>` : ''}</span></button></li>`).join('')}</ol></div>`;
+    return h + `<div class="prose"><p>${val(R.text)}</p></div>${R.waktu ? waktuHTML(R.waktu.label) : ''}` + pilihanHTML(opts.map(([o, i]) => ({ a: 'opt', v: i, t: val(o.t), d: o.d && val(o.d), kel: o.kel })));
   },
   act(n, a, v) {
     if (S.ui.last) return;
@@ -651,8 +651,8 @@ function nilaiStandar(kep, list, salahMasuk) {
 
 /* ---------- kejar-kejaran: sembunyi ---------- */
 const SPOTS = {
-  plafon: { t: 'Plafon', p: 0.10, n: 3, area: 'atas', h: 'pengap dan berdebu' }, lemari: { t: 'Lemari pakaian', p: 0.30, n: 2, area: 'kamar', h: 'sempit, bau kapur barus' }, bak: { t: 'Bak air', p: 0.15, n: 4, area: 'mandi', h: 'air dingin sampai dagu' },
-  kolong: { t: 'Kolong ranjang', p: 0.45, n: 1, area: 'kamar', h: 'gelap dan rendah' }, atap: { t: 'Atap genteng', p: 0.20, n: 3, area: 'atas', h: 'licin dan terbuka' }, warga: { t: 'Rumah warga sebelah', p: 0.05, n: 1, area: 'luar', h: 'kalau mereka mau membukakan pintu' }
+  plafon: { t: 'Plafon', p: 0.10, n: 3, area: 'atas', h: 'pengap dan berdebu', kel: 'Naik ke atas' }, lemari: { t: 'Lemari pakaian', p: 0.30, n: 2, area: 'kamar', h: 'sempit, bau kapur barus', kel: 'Di dalam rumah' }, bak: { t: 'Bak air', p: 0.15, n: 4, area: 'mandi', h: 'air dingin sampai dagu', kel: 'Di dalam rumah' },
+  kolong: { t: 'Kolong ranjang', p: 0.45, n: 1, area: 'kamar', h: 'gelap dan rendah', kel: 'Di dalam rumah' }, atap: { t: 'Atap genteng', p: 0.20, n: 3, area: 'atas', h: 'licin dan terbuka', kel: 'Naik ke atas' }, warga: { t: 'Rumah warga sebelah', p: 0.05, n: 1, area: 'luar', h: 'kalau mereka mau membukakan pintu' }
 };
 const AREA = { atas: 'ke arah langit-langit', kamar: 'ke kamar tidur', mandi: 'ke kamar mandi', luar: 'ke pintu belakang' };
 const spotP = id => id === 'warga' ? (S.massa >= 50 || S.f.dapurUmum || S.fikri >= 3 ? 0.05 : 0.6) : SPOTS[id].p;
@@ -663,8 +663,8 @@ MODES.hide = {
     let h = meta(n, m.spot ? `ronde ${Math.min(m.r + 1, n.rounds)} dari ${n.rounds}` : '') + (m.spot ? '' : prose(n));
     if (S.ui.last) return h + resultHTML();
     if (m.res) return h + `<section class="result" tabindex="-1"><p>${m.res}</p><button type="button" class="btn" data-a="rn">Lanjut</button></section>`;
-    if (!m.spot) return h + waktuHTML('Langkah mendekat') + `<div class="ask"><p class="label">${n.siapa === 'yos' ? 'Sembunyikan Bang Yos di' : 'Sembunyi di'}</p><ol class="choices">${n.spots.map((id, k) => `<li><button type="button" class="choice" data-a="spot" data-v="${id}"><span class="key">${'ABCDEF'[k]}</span><span>${SPOTS[id].t}<small>${SPOTS[id].h}</small></span></button></li>`).join('')}</ol></div>`;
-    return h + `<div class="prose"><p>${m.cue}</p></div>${waktuHTML('Senter menyapu ruangan')}<div class="ask"><ol class="choices"><li><button type="button" class="choice" data-a="diam"><span class="key">A</span><span>Diam dan tahan napas</span></button></li>${n.spots.filter(id => id !== m.spot).map((id, k) => `<li><button type="button" class="choice" data-a="pindah" data-v="${id}"><span class="key">${'BCDEF'[k]}</span><span>Pindah ke ${SPOTS[id].t.toLowerCase()}<small>lantai papan bisa berderit</small></span></button></li>`).join('')}</ol></div>`;
+    if (!m.spot) return h + waktuHTML('Langkah mendekat') + pilihanHTML(n.spots.map(id => ({ a: 'spot', v: id, t: SPOTS[id].t, d: SPOTS[id].h, kel: SPOTS[id].kel })), n.siapa === 'yos' ? 'Sembunyikan Bang Yos di' : 'Sembunyi di');
+    return h + `<div class="prose"><p>${m.cue}</p></div>${waktuHTML('Senter menyapu ruangan')}` + pilihanHTML([{ a: 'diam', t: 'Diam dan tahan napas' }].concat(n.spots.filter(id => id !== m.spot).map(id => ({ a: 'pindah', v: id, t: `Pindah ke ${SPOTS[id].t.toLowerCase()}`, d: 'lantai papan bisa berderit', kel: 'Pindah tempat' }))));
   },
   act(n, a, v) {
     const m = S.m;
@@ -753,9 +753,9 @@ MODES.run = {
 
 /* ---------- kejar-kejaran: dibuntuti mobil ---------- */
 const MANUVER = {
-  belok: { t: 'Belok mendadak', d: 'ban berdecit', run: m => { m.jarak++; m.curiga += 20; return 'Ban berdecit. Lampu di spion ikut berbelok, tapi tertinggal satu tikungan.'; } },
-  pasar: { t: 'Masuk pasar atau jalan sempit', d: 'gang sempit yang hanya dihafal orang setempat', run: m => { const lokal = m.sopir === 'wahyu'; m.jarak += lokal ? 2 : 0; m.curiga += 10; return lokal ? 'Wahyu hafal setiap gang di pasar ini. Mobil di belakang terjebak gerobak sayur.' : 'Sopir taksi ragu-ragu di gang sempit. Mobil di belakang tetap menempel.'; } },
-  putar: { t: 'Putar balik di bundaran', d: 'untuk memastikan', run: m => { m.curiga += 10; m.tahu = true; return 'Mobil itu ikut memutar penuh. Sekarang kamu yakin: kalian dibuntuti.'; } },
+  belok: { kel: 'Kelabui di jalan', t: 'Belok mendadak', d: 'ban berdecit', run: m => { m.jarak++; m.curiga += 20; return 'Ban berdecit. Lampu di spion ikut berbelok, tapi tertinggal satu tikungan.'; } },
+  pasar: { kel: 'Kelabui di jalan', t: 'Masuk pasar atau jalan sempit', d: 'gang sempit yang hanya dihafal orang setempat', run: m => { const lokal = m.sopir === 'wahyu'; m.jarak += lokal ? 2 : 0; m.curiga += 10; return lokal ? 'Wahyu hafal setiap gang di pasar ini. Mobil di belakang terjebak gerobak sayur.' : 'Sopir taksi ragu-ragu di gang sempit. Mobil di belakang tetap menempel.'; } },
+  putar: { kel: 'Kelabui di jalan', t: 'Putar balik di bundaran', d: 'untuk memastikan', run: m => { m.curiga += 10; m.tahu = true; return 'Mobil itu ikut memutar penuh. Sekarang kamu yakin: kalian dibuntuti.'; } },
   terminal: { t: 'Ganti kendaraan di terminal', d: 'melompat ke bus lain', run: m => { if (m.jarak >= 2) { m.lepas = true; return 'Kamu melompat ke bus kota yang baru berangkat. Mobil itu terhalang antrean angkot.'; } m.curiga += 20; return 'Mobil itu terlalu dekat. Mereka melihatmu turun, jadi kamu kembali naik.'; } },
   spbu: { t: 'Berhenti di SPBU dan menunggu', d: 'pura-pura biasa saja', run: m => { m.curiga = Math.max(0, m.curiga - 20); m.jarak = 0; return 'Kalian mengisi bensin pelan-pelan. Mobil itu parkir di seberang jalan dengan lampu mati.'; } }
 };
@@ -768,7 +768,7 @@ MODES.tail = {
     h += `<p class="label">Jarak buntut ${'■'.repeat(Math.max(0, m.jarak))}${'□'.repeat(Math.max(0, 5 - m.jarak))}</p><div class="marah"><span class="label">Kecurigaan mereka</span><div class="meter"><i style="width:${Math.min(100, m.curiga)}%"></i></div></div>`;
     if (m.res) return h + `<section class="result" tabindex="-1"><p>${m.res}</p><button type="button" class="btn" data-a="rn">Lanjut</button></section>`;
     if (m.akhir) return h + `<div class="prose"><p>Kalian hampir sampai, tapi mobil itu masih ada di spion.</p></div><div class="ask"><ol class="choices"><li><button type="button" class="choice" data-a="ujung" data-v="bawa"><span class="key">A</span><span>Tetap ke safehouse<small>mobil itu masih di belakang</small></span></button></li><li><button type="button" class="choice" data-a="ujung" data-v="batal"><span class="key">B</span><span>Batalkan dan tidur di masjid<small>serambinya dingin dan terbuka</small></span></button></li></ol></div>`;
-    return h + `<div class="ask"><ol class="choices">${Object.entries(MANUVER).map(([id, x], k) => `<li><button type="button" class="choice" data-a="man" data-v="${id}"><span class="key">${'ABCDE'[k]}</span><span>${x.t}<small>${x.d}</small></span></button></li>`).join('')}</ol></div>`;
+    return h + pilihanHTML(Object.entries(MANUVER).map(([id, x]) => ({ a: 'man', v: id, t: x.t, d: x.d, kel: x.kel })));
   },
   act(n, a, v) {
     const m = S.m; if (S.ui.last) return;
@@ -803,7 +803,7 @@ MODES.razia = {
     h += waktuHTML('Langkah-langkah di tangga');
     if (S.m.lines.length) h += `<ul class="rules">${S.m.lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
     const opts = n.options.filter(o => !S.m.done.includes(o.id) && (!o.req || o.req(S)));
-    return h + `<div class="ask"><ol class="choices">${opts.map((o, k) => `<li><button type="button" class="choice" data-a="opt" data-v="${o.id}"><span class="key">${'ABCDEFGH'[k]}</span><span>${val(o.t)}${o.d ? `<small>${val(o.d)}</small>` : ''}</span></button></li>`).join('')}</ol></div>`;
+    return h + pilihanHTML(opts.map(o => ({ a: 'opt', v: o.id, t: val(o.t), d: o.d && val(o.d), kel: o.kel })));
   },
   act(n, a, v) {
     if (S.ui.last) return;
@@ -842,22 +842,22 @@ function mingguBaru(m) {
 }
 const isyaratRazia = () => ' ' + (genderKu() === 'P' ? 'Petugas hanya melirikmu sebentar, lalu memeriksa laki-laki di belakangmu.' : 'Petugas memeriksa setiap laki-laki muda di antrean.');
 const AKSI_BURON = {
-  sembunyi: { t: 'Bersembunyi', d: 'tidak keluar kamar seminggu', run: () => { apply({ jejak: -10, nyali: 4 }); return 'Kamu tidak keluar kamar seminggu penuh.'; } },
-  wartel: { t: 'Kontak pusat lewat wartel', d: 'cepat, tapi penjaga wartel melihat wajahmu', run: () => kontak('wartel', S.sorotan > 60 ? 10 : 5, 0) },
-  pager: { t: 'Kirim pesan pager ke pusat', d: 'balasannya harus kamu jawab dari telepon umum', req: () => !S.m.pagerMasuk && !seniorTangkap('yudi'), run: () => { S.m.pagerMasuk = true; return 'Kamu menitipkan pesan ke operator pager: JOKO SEHAT. MINTA KABAR. Sejam kemudian pager-mu bergetar: nomor telepon umum dan jam.'; } },
-  balas: { t: 'Balas pager dari telepon umum', d: 'pakai kode, berdiri di bilik yang menghadap jalan', req: () => S.m.pagerMasuk, run: () => { S.m.pagerMasuk = false; S.f.pagerKali = (S.f.pagerKali || 0) + 1; const t = kontak('pager', 2, 0); if (S.f.pagerKali === 2) return t + ' Operator pager menanyakan nama lengkapmu, katanya untuk data pelanggan.'; if (S.f.pagerKali >= 3) { apply({ jejak: 15 }); return t + ' Seminggu kemudian kamu tahu: operator pager itu melaporkan pesan-pesanmu ke polisi.'; } return t; } },
-  kurir: { t: 'Kontak pusat lewat kurir', d: 'lambat, lewat banyak tangan', run: () => kontak('kurir', 0, 2) },
-  surat: { t: 'Kontak pusat lewat surat berkode', d: 'surat berkode, belum tentu sampai', run: () => Math.random() < 0.25 ? 'Suratmu tidak pernah sampai.' : kontak('surat', 0, 1) },
-  email: { t: 'Kontak pusat lewat email lab kampus', d: 'dari lab kampus yang ramai', req: () => KOTA[S.m.kota].kampus, run: () => { apply({ tekanan: 5 }); return kontak('email', 4, 0); } },
-  coret: { aksi: true, t: 'Coret tembok dan gerbong kereta', d: 'stensil anti pemerintah, malam-malam', run: () => coret() },
-  tulis: { aksi: true, t: 'Tulis di media dengan nama samaran', d: 'opini di majalah alternatif dan buletin berantai', req: () => aktif('laras') || KOTA[S.m.kota].kampus, run: () => tulis() },
-  gerak: { aksi: true, t: 'Gerakkan aksi bersama warga dan mahasiswa', d: 'puluhan sampai ratusan orang, lewat kontak minggu ini', run: () => gerak() },
-  pindah: { t: 'Pindahkan kawan yang paling ketakutan', d: () => saudara('wahyu') ? 'Wahyu menyetir, gratis' : rp(harga(20000)), req: () => jaringan().some(id => (S.takut[id] || 0) >= 40), run: () => pindahkan() },
-  dialog: { t: 'Kirim wakil ke dialog dengan menteri', d: 'banyak kampus menolak datang', req: () => S.m.minggu === 2 && !S.f.dialogDipilih, run: () => { S.f.dialogDipilih = 'kirim'; apply({ pengaruh: 5, yudi: 1, massa: -4, kuasa: 1 }); return 'Wakilmu duduk di meja dialog dengan menteri pada 15 April. Pengaruhmu di ruang-ruang resmi naik, tapi kampus-kampus lain mencap barisanmu kompromis.'; } },
-  tolakdialog: { t: 'Tolak undangan dialog bersama kampus lain', d: 'pernyataan sikap bersama', req: () => S.m.minggu === 2 && !S.f.dialogDipilih, run: () => { S.f.dialogDipilih = 'tolak'; apply({ massa: 4, pengaruh: -2, kuasa: -2 }); return 'Kamu ikut menandatangani penolakan dialog. Barisan antarkampus makin rapat, tapi pintu lobi tertutup untukmu.'; } },
-  uang: { t: 'Cari uang', d: 'kuli angkut di pasar', run: () => { const u = harga(40000); apply({ uang: u, jejak: 5 }); return `Kamu menjadi kuli angkut di pasar. Upahnya ${rp(u)}.`; } },
-  ktp: { t: 'Urus KTP palsu', d: () => rp(S.f.yosBerutang ? harga(37500) : harga(75000)), req: () => KOTA[S.m.kota].jaringan && !S.f.ktpPalsu, run: () => { const c = S.f.yosBerutang ? harga(37500) : harga(75000); if (!bayar(c)) return 'Uangmu tidak cukup untuk KTP palsu.'; S.f.ktpPalsu = true; return S.f.yosBerutang ? 'Bang Yos menepati utangnya. KTP atas nama Joko Susilo jadi dalam dua hari, separuh harga.' : 'KTP atas nama Joko Susilo jadi dalam tiga hari.'; } },
-  keluarga: { t: 'Kabari keluarga', d: 'telepon ke rumah', run: () => { apply({ ibu: 1, nyali: 5, jejak: S.m.kota === 'magelang' ? 4 : 10 }); return 'Suara Ibu bergetar di telepon. Ia tidak bertanya kamu di mana.'; } }
+  sembunyi: { kel: 'Bertahan hidup', t: 'Bersembunyi', d: 'tidak keluar kamar seminggu', run: () => { apply({ jejak: -10, nyali: 4 }); return 'Kamu tidak keluar kamar seminggu penuh.'; } },
+  wartel: { kel: 'Kontak pusat', t: 'Kontak pusat lewat wartel', d: 'cepat, tapi penjaga wartel melihat wajahmu', run: () => kontak('wartel', S.sorotan > 60 ? 10 : 5, 0) },
+  pager: { kel: 'Kontak pusat', t: 'Kirim pesan pager ke pusat', d: 'balasannya harus kamu jawab dari telepon umum', req: () => !S.m.pagerMasuk && !seniorTangkap('yudi'), run: () => { S.m.pagerMasuk = true; return 'Kamu menitipkan pesan ke operator pager: JOKO SEHAT. MINTA KABAR. Sejam kemudian pager-mu bergetar: nomor telepon umum dan jam.'; } },
+  balas: { kel: 'Kontak pusat', t: 'Balas pager dari telepon umum', d: 'pakai kode, berdiri di bilik yang menghadap jalan', req: () => S.m.pagerMasuk, run: () => { S.m.pagerMasuk = false; S.f.pagerKali = (S.f.pagerKali || 0) + 1; const t = kontak('pager', 2, 0); if (S.f.pagerKali === 2) return t + ' Operator pager menanyakan nama lengkapmu, katanya untuk data pelanggan.'; if (S.f.pagerKali >= 3) { apply({ jejak: 15 }); return t + ' Seminggu kemudian kamu tahu: operator pager itu melaporkan pesan-pesanmu ke polisi.'; } return t; } },
+  kurir: { kel: 'Kontak pusat', t: 'Kontak pusat lewat kurir', d: 'lambat, lewat banyak tangan', run: () => kontak('kurir', 0, 2) },
+  surat: { kel: 'Kontak pusat', t: 'Kontak pusat lewat surat berkode', d: 'surat berkode, belum tentu sampai', run: () => Math.random() < 0.25 ? 'Suratmu tidak pernah sampai.' : kontak('surat', 0, 1) },
+  email: { kel: 'Kontak pusat', t: 'Kontak pusat lewat email lab kampus', d: 'dari lab kampus yang ramai', req: () => KOTA[S.m.kota].kampus, run: () => { apply({ tekanan: 5 }); return kontak('email', 4, 0); } },
+  coret: { kel: 'Tanda perlawanan', aksi: true, t: 'Coret tembok dan gerbong kereta', d: 'stensil anti pemerintah, malam-malam', run: () => coret() },
+  tulis: { kel: 'Tanda perlawanan', aksi: true, t: 'Tulis di media dengan nama samaran', d: 'opini di majalah alternatif dan buletin berantai', req: () => aktif('laras') || KOTA[S.m.kota].kampus, run: () => tulis() },
+  gerak: { kel: 'Tanda perlawanan', aksi: true, t: 'Gerakkan aksi bersama warga dan mahasiswa', d: 'puluhan sampai ratusan orang, lewat kontak minggu ini', run: () => gerak() },
+  pindah: { kel: 'Bertahan hidup', t: 'Pindahkan kawan yang paling ketakutan', d: () => saudara('wahyu') ? 'Wahyu menyetir, gratis' : rp(harga(20000)), req: () => jaringan().some(id => (S.takut[id] || 0) >= 40), run: () => pindahkan() },
+  dialog: { kel: 'Undangan dialog menteri', t: 'Kirim wakil ke dialog dengan menteri', d: 'banyak kampus menolak datang', req: () => S.m.minggu === 2 && !S.f.dialogDipilih, run: () => { S.f.dialogDipilih = 'kirim'; apply({ pengaruh: 5, yudi: 1, massa: -4, kuasa: 1 }); return 'Wakilmu duduk di meja dialog dengan menteri pada 15 April. Pengaruhmu di ruang-ruang resmi naik, tapi kampus-kampus lain mencap barisanmu kompromis.'; } },
+  tolakdialog: { kel: 'Undangan dialog menteri', t: 'Tolak undangan dialog bersama kampus lain', d: 'pernyataan sikap bersama', req: () => S.m.minggu === 2 && !S.f.dialogDipilih, run: () => { S.f.dialogDipilih = 'tolak'; apply({ massa: 4, pengaruh: -2, kuasa: -2 }); return 'Kamu ikut menandatangani penolakan dialog. Barisan antarkampus makin rapat, tapi pintu lobi tertutup untukmu.'; } },
+  uang: { kel: 'Bertahan hidup', t: 'Cari uang', d: 'kuli angkut di pasar', run: () => { const u = harga(40000); apply({ uang: u, jejak: 5 }); return `Kamu menjadi kuli angkut di pasar. Upahnya ${rp(u)}.`; } },
+  ktp: { kel: 'Bertahan hidup', t: 'Urus KTP palsu', d: () => rp(S.f.yosBerutang ? harga(37500) : harga(75000)), req: () => KOTA[S.m.kota].jaringan && !S.f.ktpPalsu, run: () => { const c = S.f.yosBerutang ? harga(37500) : harga(75000); if (!bayar(c)) return 'Uangmu tidak cukup untuk KTP palsu.'; S.f.ktpPalsu = true; return S.f.yosBerutang ? 'Bang Yos menepati utangnya. KTP atas nama Joko Susilo jadi dalam dua hari, separuh harga.' : 'KTP atas nama Joko Susilo jadi dalam tiga hari.'; } },
+  keluarga: { kel: 'Bertahan hidup', t: 'Kabari keluarga', d: 'telepon ke rumah', run: () => { apply({ ibu: 1, nyali: 5, jejak: S.m.kota === 'magelang' ? 4 : 10 }); return 'Suara Ibu bergetar di telepon. Ia tidak bertanya kamu di mana.'; } }
 };
 function kontak(ch, jj, hops) { apply({ jejak: jj, massa: 2, pengaruh: 2 }); S.m.kontak = ch; S.m.hops = hops + KOTA[S.m.kota].jarak; return `Kontak lewat ${ch} tersambung. Kawan-kawan di pusat tahu kamu masih ada.`; }
 TOPIK.instruksi = {
@@ -945,8 +945,8 @@ MODES.buron = {
     const jr = jaringan();
     if (jr.length) h += `<div class="obs"><p class="label">Jaringanmu</p><ul class="rules">${jr.map(id => { const t = (S.takut || {})[id] || 0; return `<li>${namaJaringan(id)} · ${t >= 70 ? '<b class="bad">panik, ingin menyerah</b>' : t >= 40 ? 'tidak bisa tidur' : 'bersembunyi, masih tenang'}</li>`; }).join('')}</ul></div>`;
     if (m.step === 'jaringan') return h + (m.out.length ? `<ul class="rules">${m.out.map(l => `<li>${l}</li>`).join('')}</ul>` : '') + panelMain(m);
-    if (m.step === 'kota') return h + kabarHTML() + `<div class="ask"><p class="label">Minggu ini kamu ada di mana?</p><ol class="choices">${Object.entries(KOTA).map(([id, k], i) => `<li><button type="button" class="choice" data-a="kota" data-v="${id}"><span class="key">${'ABCDEF'[i]}</span><span>${id === m.kota ? 'Tetap di ' + k.t : 'Pindah ke ' + k.t}<small>${k.d}${id === m.kota ? '' : ' · ongkos ' + rp(harga(k.ongkos))}</small></span></button></li>`).join('')}</ol></div>`;
-    if (m.step === 'aksi') return h + (m.out.length ? `<ul class="rules">${m.out.map(l => `<li>${l}</li>`).join('')}</ul>` : '') + `<div class="ask"><p class="label">Pilih tindakan ${m.pilih.length + 1} dari 3${m.pilih.some(id => AKSI_BURON[id].aksi) ? '' : ' · gerakan butuh tanda bahwa kamu masih ada'}</p><ol class="choices">${Object.entries(AKSI_BURON).filter(([id, x]) => (!x.req || x.req()) && !m.pilih.includes(id)).map(([id, x], i) => `<li><button type="button" class="choice" data-a="aksi" data-v="${id}"><span class="key">${'ABCDEFGHIJKL'[i]}</span><span>${x.t}<small>${val(x.d)}</small></span></button></li>`).join('')}</ol></div>`;
+    if (m.step === 'kota') return h + kabarHTML() + pilihanHTML(Object.entries(KOTA).map(([id, k]) => ({ a: 'kota', v: id, t: id === m.kota ? 'Tetap di ' + k.t : 'Pindah ke ' + k.t, d: k.d + (id === m.kota ? '' : ' · ongkos ' + rp(harga(k.ongkos))), kel: id === m.kota ? null : 'Pindah kota' })), 'Minggu ini kamu ada di mana?');
+    if (m.step === 'aksi') return h + (m.out.length ? `<ul class="rules">${m.out.map(l => `<li>${l}</li>`).join('')}</ul>` : '') + pilihanHTML(Object.entries(AKSI_BURON).filter(([id, x]) => (!x.req || x.req()) && !m.pilih.includes(id)).map(([id, x]) => ({ a: 'aksi', v: id, t: x.t, d: val(x.d), kel: x.kel })), `Pilih tindakan ${m.pilih.length + 1} dari 3${m.pilih.some(id => AKSI_BURON[id].aksi) ? '' : ' · gerakan butuh tanda bahwa kamu masih ada'}`);
     const jen = m.ev && m.ev.jenewa ? `<div class="ask"><p class="label">Kesempatan ke Jenewa</p><ol class="choices"><li><button type="button" class="choice" data-a="jenewa" data-v="pergi"${jenewaBisa() ? '' : ' disabled'}><span class="key">A</span><span>Berangkat sendiri ke Jenewa<small>${jenewaBisa() ? 'tiket ditanggung LSM' : jenewaAlasan()}</small></span></button></li><li><button type="button" class="choice" data-a="jenewa" data-v="kirim"${aktif('laras') || S.ratna >= 3 ? '' : ' disabled'}><span class="key">B</span><span>Kirim ${aktif('laras') ? 'Laras' : 'Kak Ratna'} sebagai gantimu<small>kamu tetap bersembunyi di sini</small></span></button></li><li><button type="button" class="choice" data-a="jenewa" data-v="tidak"><span class="key">C</span><span>Tidak usah</span></button></li></ol></div>` : `<button type="button" class="btn" data-a="minggu">${m.minggu < 5 ? 'Minggu berikutnya' : 'Pulang ke Jakarta'}</button>`;
     return h + `<section class="result" tabindex="-1"><ul class="rules">${m.out.map(l => `<li>${l}</li>`).join('')}</ul>${m.ev ? `<div class="event"><p class="label">Minggu ini</p><p>${m.ev.t}</p></div>` : ''}${deltasHTML(m.deltas)}${jen}</section>`;
   },
@@ -1085,7 +1085,7 @@ MODES.interogasi = {
     if (m.res) return h + `<section class="result" tabindex="-1">${[].concat(m.res).map(p => `<p>${p}</p>`).join('')}<button type="button" class="btn" data-a="rn">Lanjut</button></section>`;
     const sec = m.secrets.map(x => `<li>${x.t}${S.bocor.includes(x.id) ? ' · <b class="bad">sudah bocor</b>' : m.jam >= x.exp ? ' · <b class="good">sudah kedaluwarsa</b>' : x.exp < 1e9 ? ` · kedaluwarsa jam ke-${x.exp}` : ''}</li>`).join('');
     const opsi = [['diam', 'Diam', 'tatap jam dinding']].concat(kutipan() ? [['kutip', 'Diam sambil mengulang kutipan dari buku dalam hati', 'satu kalimat, berulang-ulang']] : []).concat([['palsu', 'Beri info palsu', 'mereka mungkin mengeceknya']]).concat(m.secrets.filter(x => !S.bocor.includes(x.id)).map(x => ['basi:' + x.id, `Beri info soal ${x.t.toLowerCase()}`, ''])).concat([['semua', 'Bocorkan semua', 'supaya lampu dimatikan']]);
-    return h + `<div class="prose"><p>${m.taktik}</p></div><div class="obs"><p class="label">Yang kamu tahu</p><ul class="rules">${sec}</ul></div><div class="ask"><ol class="choices">${opsi.map(([v, t, d], k) => `<li><button type="button" class="choice" data-a="jawab" data-v="${v}"><span class="key">${'ABCDEFGHIJ'[k]}</span><span>${t}<small>${d}</small></span></button></li>`).join('')}</ol></div>`;
+    return h + `<div class="prose"><p>${m.taktik}</p></div><div class="obs"><p class="label">Yang kamu tahu</p><ul class="rules">${sec}</ul></div>` + pilihanHTML(opsi.map(([v, t, d]) => ({ a: 'jawab', v, t, d, kel: v === 'palsu' || v.startsWith('basi:') ? 'Beri informasi' : null })));
   },
   act(n, a, v) {
     const m = S.m, step = n.jenis === 'resmi' ? 12 : 24;

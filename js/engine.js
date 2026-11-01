@@ -197,7 +197,7 @@ function fresh() {
     versi: VERSI_SIMPAN, node: 'intro', nama: 'Bagas Pratama', fak: 'Hukum', gender: 'L', foto: 0, nim: '', bulan: '1996-08', kurs: 2340,
     kuasa: 100, pengaruh: 0, massa: 30, nyali: 50, nyaliMax: 100, sorotan: 5, jejak: 20, iklim: 10, ipk: 3, tekanan: 0, ricuh: 0, cap: 0,
     uang: { tunai: 20000, bank: 0, usd: 0, barang: 0, utang: 0 }, bankJenis: null, bankBeku: false,
-    rel: { bapak: 3, ibu: 4, dika: 4 }, kagum: 0, tahu: 0, hati: {}, hatiL: {},
+    rel: { bapak: 3, ibu: 4, dika: 4 }, kagum: 0, tahu: 0, hati: {}, hatiL: {}, riwayat: [],
     damar: 0, ratna: 0, fikri: 0, yudi: 0,
     kader: {}, dekat: {}, lelah: {}, penyusup: pick(['wahyu', 'asep', 'dimas']),
     buku: { baca: null, sisa: 0, selesai: [], dikos: [], paham: {} }, bekal: [], protokol: [], bukti: [], kabar: [], bocor: [], hilang: [], siap: {},
@@ -275,6 +275,7 @@ function go(id) {
     const M = MODES[n.mode || 'story']; if (M.enter) M.enter(n);
     if (!S.ending && S.nyali <= 0) return end('patah');
     if (n.log) S.log.push(val(n.log));
+    if (n.text && n.mode !== 'intro') catatRiwayat({ judul: val(n.judul), waktu: val(n.waktu), teks: [].concat(val(n.text)) });
     const q = S.bulan.slice(0, 4) + Math.floor((Number(S.bulan.slice(5, 7)) - 1) / 3);
     if (S.bekal.includes('foto') && S.nyali < 20 && !S.f['foto' + q]) { S.f['foto' + q] = true; apply({ nyali: 5 }); (S.ui.enterDelta = S.ui.enterDelta || []).push(['Foto keluarga di dompet: Nyali +5', false]); }
     if (!BOT) kamera(moved);
@@ -294,6 +295,9 @@ function act(a, v) {
 }
 function aksi(a, v) {
   const n = NODES[S.node], M = MODES[n.mode || 'story'];
+  if (a === 'grup') { S.ui.grup = (S.ui.grup || []).concat(v); return render('.ask'); }
+  if (a === 'grupkembali') { S.ui.grup = (S.ui.grup || []).slice(0, -1); return render('.ask'); }
+  S.ui.grup = null;
   if (a === 'look') return look(v);
   if (a === 'bicara') return mulaiObrolan(v);
   if (a === 'ucap') return ucap(+v);
@@ -396,6 +400,7 @@ function ucap(v) {
   for (const [id, n] of Object.entries(lain || {})) ubahHati(id, n);
   if (fx) apply(fx);
   g.jejak.push({ kata: G.kata, jawab: t, balas: val(balas) });
+  catatRiwayat({ judul: 'Bicara dengan ' + val(D.nama), teks: [G.kata], pick: t, sesudah: [val(balas)] });
   g.i++;
   if (g.i >= D.giliran.length) { g.selesai = true; g.tutup = rasa(D.siapa, D.tutup); S.ui.raut[D.siapa] = { hangat: 'senyum', dingin: RAUT_BERLAWANAN[D.siapa] || 'marah', biasa: 'tenang' }[sikap(D.siapa)]; S.f['dlg_' + g.k] = true; if (D.hadiah && D.hadiah[sikap(D.siapa)]) apply(D.hadiah[sikap(D.siapa)]); }
   render('.dlg');
@@ -431,8 +436,44 @@ function dinginkan(fx) {
 const chips = hs => hs.length ? `<div class="look"><span class="label">Amati</span>${hs.map(([id, x]) => `<button type="button" class="chip${S.seen[S.node + ':' + id] ? ' seen' : ''}" data-a="look" data-v="${id}" aria-pressed="${S.ui.obs === id}">${val(x.label)}</button>`).join('')}</div>` : '';
 const visibleChoices = list => (list || []).map((c, i) => [c, i]).filter(([c]) => !c.req || c.req(S));
 function choicesHTML(list, label = 'Apa yang kamu lakukan?') {
-  const vs = visibleChoices(list);
-  return `<div class="ask"><p class="label">${label}</p><ol class="choices">${vs.map(([c, i], k) => `<li><button type="button" class="choice" data-a="choose" data-v="${i}"${c.dis && c.dis(S) ? ' disabled' : ''}><span class="key" aria-hidden="true">${'ABCDEFGH'[k]}</span><span>${val(c.t)}${c.d ? `<small>${val(c.d)}</small>` : ''}${c.dis && c.dis(S) ? `<small class="bad">${val(c.alasan) || 'belum bisa dipilih'}</small>` : ''}</span></button></li>`).join('')}</ol></div>`;
+  return pilihanHTML(visibleChoices(list).map(([c, i]) => ({ a: 'choose', v: i, t: val(c.t), d: c.d && val(c.d), dis: c.dis && c.dis(S), alasan: val(c.alasan), kel: val(c.kel) })), label);
+}
+
+/* ---------- daftar pilihan: paling sedikit 2, paling banyak 4 tombol ---------- */
+// item: { a, v, t, d, dis, alasan, kel }. Kalau lebih dari 4, item dengan kel yang sama dikumpulkan jadi satu tombol
+// kelompok; sisanya masuk "Pilihan lain". Di dalam kelompok, tombol Kembali ikut dihitung.
+const MAKS_PILIHAN = 4;
+function kelompokkan(items) {
+  if (items.length <= MAKS_PILIHAN) return items;
+  const entri = [], kel = {};
+  for (const it of items) {
+    if (!it.kel) { entri.push(it); continue; }
+    if (!kel[it.kel]) { kel[it.kel] = { grup: it.kel, isi: [] }; entri.push(kel[it.kel]); }
+    kel[it.kel].isi.push(it);
+  }
+  const rapi = entri.map(e => e.grup && e.isi.length === 1 ? e.isi[0] : e);
+  // satu kelompok saja di puncak tidak ada gunanya: buka langsung isinya
+  return rapi.length === 1 && rapi[0].grup ? rapi[0].isi : rapi;
+}
+const rapikan = (entri, maks) => entri.length <= maks ? entri : entri.slice(0, maks - 1).concat({ grup: 'Pilihan lain', isi: entri.slice(maks - 1) });
+const jumlahDaun = e => e.grup ? e.isi.reduce((a, x) => a + jumlahDaun(x), 0) : 1;
+function pilihanHTML(items, label) {
+  let entri = rapikan(kelompokkan(items), MAKS_PILIHAN);
+  const jalur = [];
+  for (const nama of S.ui.grup || []) {
+    const g = entri.find(e => e.grup === nama);
+    if (!g) break;
+    jalur.push(nama); entri = rapikan(g.isi, MAKS_PILIHAN - 1);
+  }
+  const kunci = k => `<span class="key" aria-hidden="true">${'ABCD'[k]}</span>`;
+  const tombol = (e, k) => e.grup
+    ? `<li><button type="button" class="choice grup" data-a="grup" data-v="${esc(e.grup)}">${kunci(k)}<span>${e.grup}…<small>${jumlahDaun(e)} pilihan</small></span></button></li>`
+    : `<li><button type="button" class="choice" data-a="${e.a}"${e.v != null ? ` data-v="${esc(String(e.v))}"` : ''}${e.dis ? ' disabled' : ''}>${kunci(k)}<span>${e.t}${e.d ? `<small>${e.d}</small>` : ''}${e.dis ? `<small class="bad">${e.alasan || 'belum bisa dipilih'}</small>` : ''}</span></button></li>`;
+  const kembali = jalur.length ? `<li><button type="button" class="choice kembali" data-a="grupkembali">${kunci(entri.length)}<span>Kembali</span></button></li>` : '';
+  const judul = [label, jalur.at(-1)].filter(Boolean).join(' · ');
+  // satu jalan saja bukan pilihan: tampil sebagai tombol lanjut, bukan gelembung pilihan
+  if (entri.length === 1 && !jalur.length && !entri[0].grup) { const e = entri[0]; return `<div class="ask"><button type="button" class="btn lanjut" data-a="${e.a}"${e.v != null ? ` data-v="${esc(String(e.v))}"` : ''}${e.dis ? ' disabled' : ''}>${e.t}</button>${e.d ? `<p class="fine">${e.d}</p>` : ''}</div>`; }
+  return `<div class="ask">${judul ? `<p class="label">${judul}</p>` : ''}<ol class="choices">${entri.map(tombol).join('')}${kembali}</ol></div>`;
 }
 function resultHTML() {
   const L = S.ui.last;
@@ -445,6 +486,7 @@ function setResult(pickText, note, b, goId, lanjut) {
   S.ui.last = { pick: pickText, note, deltas, go: goId, lanjut, batin: renungan(buruk, arah.length), isyarat: S.ui.isyaratNote };
   S.ui.isyaratNote = null;
   // keputusan yang dipilih sendiri diingat untuk malam-malam tanpa tidur
+  catatRiwayat({ pick: pickText, sesudah: [].concat(note) });
   if (pickText && !NODES[S.node].aman) {
     S.f.keputusan = { t: pickText, lain: S.ui.lainPilihan || [], buruk, bulan: S.bulan };
     if (buruk && S.f.keputusan.lain.length) S.f.gagal = S.f.keputusan; // diingat sampai malam tanpa tidur berikutnya
@@ -541,6 +583,7 @@ function render(focusSel) {
   p.innerHTML = MODES[n.mode || 'story'].panel(n);
   $('notes-body').innerHTML = notesHTML();
   $('stage').dataset.lampu = S.ui.lampu || '';
+  if ($('riwayat') && $('riwayat').open) $('riwayat-body').innerHTML = riwayatHTML();
   // momen berbatas waktu tampil sekaligus: jam sudah berjalan
   if (baru && !S.ui.waktu) ungkap([...p.children].flatMap(el => el.matches('.prose') ? [...el.children] : [el]));
   else if (focusSel === '.result' || focusSel === '.obs') { const el = p.querySelector(focusSel); if (el) ungkap([...el.children]); }
@@ -579,6 +622,16 @@ function selesaiUngkap(buang) {
   if (!p.classList.contains('mengungkap')) return;
   p.classList.remove('mengungkap');
   for (const el of p.querySelectorAll('.ungkap')) el.classList.remove('ungkap');
+}
+
+/* ---------- riwayat cerita ---------- */
+// 80 catatan terakhir: narasi adegan, pilihan beserta akibatnya, dan percakapan
+function catatRiwayat(e) { if (BOT) return; S.riwayat = (S.riwayat || []).concat(e).slice(-80); }
+function riwayatHTML() {
+  const r = (S.riwayat || []).slice().reverse();
+  if (!r.length) return '<p class="fine">Belum ada yang tercatat.</p>';
+  const bersih = t => String(t || '').replace(/<(?!\/?(b|i|em|strong)>)[^>]+>/g, '');
+  return r.map(e => [e.judul ? `<p class="label">${bersih(e.judul)}${e.waktu ? ' · ' + bersih(e.waktu) : ''}</p>` : '', ...(e.teks || []).filter(Boolean).map(t => `<p>${bersih(t)}</p>`), e.pick ? `<p class="pick">— ${bersih(e.pick)}</p>` : '', ...(e.sesudah || []).filter(Boolean).map(t => `<p>${bersih(t)}</p>`)].join('')).join('<hr>');
 }
 
 /* ---------- isyarat adegan: gambar ikut bercerita saat paragraf muncul ---------- */

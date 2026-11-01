@@ -1,17 +1,17 @@
 /* Angkatan 98 · Babak I: prolog sampai bab 6 */
 TOPIK.lengser = { truth: () => false, benar: () => 'Presiden memang bilang begitu ke partainya, tapi orang-orang dekatnya justru menyiapkan masa jabatan ketujuh.', salah: () => 'Presiden sudah pasti mundur tahun depan. Kita tinggal menunggu.' };
 const ISU = [
-  { v: 'sembako', t: 'Turunkan harga sembako', ambang: 0, d: 'menarik warga, ibu-ibu, buruh' },
-  { v: 'golput', t: 'Golput: tolak pemilu tanpa pilihan', ambang: 15, d: 'menarik mahasiswa', req: s => s.bulan <= '1997-06' },
-  { v: 'kkn', t: 'Berantas KKN', ambang: 20, d: 'menarik kelas menengah dan pers' },
-  { v: 'tanah', t: 'Kembalikan tanah rakyat', ambang: 15, d: 'menarik petani dan warga gusuran', req: s => s.bulan >= '1998-01' },
-  { v: 'uu', t: 'Cabut lima paket UU politik', ambang: 35, d: 'menarik mahasiswa dan akademisi' },
+  { v: 'sembako', kel: 'Isu ekonomi', t: 'Turunkan harga sembako', ambang: 0, d: 'menarik warga, ibu-ibu, buruh' },
+  { v: 'golput', kel: 'Isu politik', t: 'Golput: tolak pemilu tanpa pilihan', ambang: 15, d: 'menarik mahasiswa', req: s => s.bulan <= '1997-06' },
+  { v: 'kkn', kel: 'Isu ekonomi', t: 'Berantas KKN', ambang: 20, d: 'menarik kelas menengah dan pers' },
+  { v: 'tanah', kel: 'Isu ekonomi', t: 'Kembalikan tanah rakyat', ambang: 15, d: 'menarik petani dan warga gusuran', req: s => s.bulan >= '1998-01' },
+  { v: 'uu', kel: 'Isu politik', t: 'Cabut lima paket UU politik', ambang: 35, d: 'menarik mahasiswa dan akademisi' },
   { v: 'hilang', t: 'Usut orang hilang', ambang: 40, d: 'menarik LBH dan keluarga korban', req: s => s.f.damarHilang },
-  { v: 'dwifungsi', t: 'Cabut dwifungsi ABRI', ambang: 55, d: 'menarik mahasiswa dan intelektual' },
-  { v: 'turun', t: 'Presiden turun', ambang: 75, d: 'menarik semua kelompok' }
+  { v: 'dwifungsi', kel: 'Isu politik', t: 'Cabut dwifungsi ABRI', ambang: 55, d: 'menarik mahasiswa dan intelektual' },
+  { v: 'turun', kel: 'Isu politik', t: 'Presiden turun', ambang: 75, d: 'menarik semua kelompok' }
 ];
 const BISIK = { ibu: 'ibu-ibu pasar terus membicarakannya', petani: 'petani di balai desa menyebutnya berkali-kali', mhs: 'mahasiswa di fakultas menunggu isu ini' };
-const isuOpts = () => ISU.filter(i => !i.req || i.req(S)).map(i => ({ v: i.v, t: i.t, d: i.d + (S.iklim >= i.ambang ? '' : ' · orang-orang belum siap mendengarnya') + (typeof KAL_ISU !== 'undefined' ? Object.keys(KAL_ISU).filter(g => ((S.f.kalangan || {})[g] || 0) >= 0.5 && KAL_ISU[g].includes(i.v)).map(g => ' · ' + BISIK[g]).join('') : '') }));
+const isuOpts = () => ISU.filter(i => !i.req || i.req(S)).map(i => ({ v: i.v, kel: i.kel, t: i.t, d: i.d + (S.iklim >= i.ambang ? '' : ' · orang-orang belum siap mendengarnya') + (typeof KAL_ISU !== 'undefined' ? Object.keys(KAL_ISU).filter(g => ((S.f.kalangan || {})[g] || 0) >= 0.5 && KAL_ISU[g].includes(i.v)).map(g => ' · ' + BISIK[g]).join('') : '') }));
 function isuFx(v, base) {
   const I = ISU.find(i => i.v === v), siap = S.iklim >= I.ambang;
   return siap ? { fx: { massa: base, sorotan: Math.round(base / 2), kuasa: -Math.round(base * 0.6) }, note: `Isu “${I.t}” diterima orang banyak.` } : { fx: { massa: Math.round(base / 3), sorotan: base, cap: 2, kuasa: 2 }, note: `Isu “${I.t}” datang terlalu cepat. Koran pemerintah mencapmu “makar”, dan warga menjaga jarak.` };
@@ -40,8 +40,8 @@ const tabel = (head, rows) => `<div class="sheet"><table><thead><tr>${head.map(h
 function bukuChoices(next) {
   const list = [];
   if (S.buku.baca) list.push({ t: `Lanjutkan ${BUKU[S.buku.baca].judul}`, d: `${S.buku.sisa} Kamis lagi`, run: s => { s.ui.tmp = baca(1); }, note: s => s.ui.tmp || `Kamu membaca ${BUKU[s.buku.baca].judul} sampai lewat tengah malam.`, go: next });
-  for (const [id, b] of Object.entries(BUKU)) if (!S.buku.selesai.includes(id) && S.buku.baca !== id) list.push({ t: `${S.buku.baca ? 'Ganti ke' : 'Ambil'} ${b.judul} dari rak`, d: `${b.lama} Kamis${b.terlarang ? ', buku terlarang' : ''}`, run: s => { s.buku.baca = id; s.buku.sisa = b.lama; s.ui.tmp = baca(1); }, note: s => s.ui.tmp || `Kamu mulai membaca ${b.judul}. ${b.terlarang ? 'Sampulnya dibungkus kertas cokelat.' : ''}`, go: next });
-  return list.slice(0, 5);
+  for (const [id, b] of Object.entries(BUKU)) if (!S.buku.selesai.includes(id) && S.buku.baca !== id) list.push({ kel: S.buku.baca ? 'Ganti ke buku lain' : 'Ambil buku dari rak', t: `${S.buku.baca ? 'Ganti ke' : 'Ambil'} ${b.judul} dari rak`, d: `${b.lama} Kamis${b.terlarang ? ', buku terlarang' : ''}`, run: s => { s.buku.baca = id; s.buku.sisa = b.lama; s.ui.tmp = baca(1); }, note: s => s.ui.tmp || `Kamu mulai membaca ${b.judul}. ${b.terlarang ? 'Sampulnya dibungkus kertas cokelat.' : ''}`, go: next });
+  return list;
 }
 const obrolan = (id, teks, catatan) => ({ label: KADER[id].nama, text: teks, act: { t: `Ajak ${KADER[id].nama} bergabung`, req: s => !s.kader[id] && kaderAktif().length < 5 && sikap(id) !== 'dingin' && (!catatan.req || catatan.req(s)), fx: { kader: id }, note: catatan.note } });
 

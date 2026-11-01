@@ -114,6 +114,14 @@ body {
 .kb p { font-style: italic; }
 .cek { font-style: normal !important; font-weight: 700; font-size: .85rem; }
 .say { font-style: italic; max-width: 68ch; }
+.laci { display: grid; gap: 6px; }
+.btn.lanjut { text-align: left; max-width: 100%; }
+/* riwayat cerita: terbaru di atas, teks lebih kecil dari naskah utama */
+.riwayat { display: grid; gap: 10px; padding-top: 8px; max-width: 68ch; font-size: .86rem; color: var(--on-desk); }
+.riwayat p { margin: 0; }
+.riwayat .label { color: var(--on-desk-soft); }
+.riwayat .pick { color: var(--paper); }
+.riwayat hr { width: 100%; margin: 0; border: 0; border-top: 1px dashed var(--on-desk-soft); }
 /* suara batin protagonis: lebih redup dari narasi, seperti pikiran yang lewat */
 .batin { font-style: italic; color: var(--ink-soft); max-width: 68ch; padding-left: 12px; border-left: 2px dotted var(--ink-soft); }
 .jejak { display: grid; gap: 6px; max-width: 68ch; }
@@ -210,7 +218,7 @@ button.slot { font: inherit; color: inherit; background: none; text-align: left;
   .hud { grid-column: 1 / -1; }
   .stage { grid-column: 1; grid-row: 2 / 4; align-self: start; min-width: 0; width: min(100%, calc((100dvh - 150px) * 16 / 9)); }
   .panel { grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; }
-  .notes { grid-column: 2; grid-row: 3; max-height: 32dvh; overflow-y: auto; }
+  .laci { grid-column: 2; grid-row: 3; max-height: 32dvh; overflow-y: auto; }
 }
 [hidden] { display: none !important; }
 </style>
@@ -239,7 +247,10 @@ button.slot { font: inherit; color: inherit; background: none; text-align: left;
     <div class="blink" aria-hidden="true"><i></i><i></i></div>
   </div>
   <section class="panel" id="panel" aria-live="polite" tabindex="-1"></section>
-  <details class="notes"><summary>Catatan: senior, keluarga, kader, uang, buku, bukti, kabar</summary><div id="notes-body"></div></details>
+  <div class="laci">
+    <details class="notes"><summary>Catatan: senior, keluarga, kader, uang, buku, bukti, kabar</summary><div id="notes-body"></div></details>
+    <details class="notes" id="riwayat"><summary>Riwayat cerita</summary><div id="riwayat-body" class="riwayat"></div></details>
+  </div>
 </div>
 
 <script src="js/art.js"></script>
@@ -285,6 +296,8 @@ $('panel').addEventListener('click', e => {
 });
 // tombol di HUD dan panel catatan (suara, batas waktu) berada di luar panel utama
 document.addEventListener('click', e => { const b = e.target.closest('#hud [data-a], #notes-body [data-a]'); if (b && !b.disabled) act(b.dataset.a, b.dataset.v); });
+// riwayat hanya disusun saat lacinya dibuka
+$('riwayat').addEventListener('toggle', () => { if ($('riwayat').open) $('riwayat-body').innerHTML = riwayatHTML(); });
 $('panel').addEventListener('input', e => { if (e.target.id === 'ktm-nama') { S.nama = e.target.value; renderScene(); } });
 $('panel').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'ktm-form') act('ambil'); if (e.target.id === 'mg-form') act('mg', $('mg-isi').value); });
 S = fresh();

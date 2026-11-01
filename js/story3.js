@@ -180,8 +180,8 @@ Object.assign(NODES, {
     choices: [
       { t: 'Atur logistik dan ring pengaman per kampus', fx: { kuasa: -5, massa: 10, pengaruh: 8, ricuh: -1, ratna: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Dua penyusup tanpa kartu digiring keluar sebelum sempat membuat onar.' },
       { t: 'Larang elite dan partai naik panggung', fx: { kuasa: -5, massa: 10, pengaruh: 5, fikri: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Seorang tokoh terkenal turun panggung dengan muka masam. Massa bersorak.' },
-      { t: 'Buka dialog dengan fraksi dan tokoh', fx: { kuasa: -3, pengaruh: 12, massa: -5, yudi: 2 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Kamu pulang membawa nomor telepon tiga orang penting. Beberapa kawan mulai memanggilmu “Pak Dewan”.' },
-      { t: 'Bicara dengan perwira marinir yang berjaga di gerbang', fx: { kuasa: -4, ricuh: -1, pengaruh: 4, nyali: 3 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Perwira muda itu mendengarkanmu, lalu berbalik ke anak buahnya. Kamu mendengar ia berpesan agar tidak ada yang mengarahkan senjata ke mahasiswa.' },
+      { t: 'Buka dialog dengan fraksi dan tokoh', kel: 'Bicara dengan pihak luar', fx: { kuasa: -3, pengaruh: 12, massa: -5, yudi: 2 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Kamu pulang membawa nomor telepon tiga orang penting. Beberapa kawan mulai memanggilmu “Pak Dewan”.' },
+      { t: 'Bicara dengan perwira marinir yang berjaga di gerbang', kel: 'Bicara dengan pihak luar', fx: { kuasa: -4, ricuh: -1, pengaruh: 4, nyali: 3 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Perwira muda itu mendengarkanmu, lalu berbalik ke anak buahnya. Kamu mendengar ia berpesan agar tidak ada yang mengarahkan senjata ke mahasiswa.' },
       { t: 'Tolak semua negosiasi dan menginap sampai Presiden turun', fx: { kuasa: -6, massa: 8, nyali: -5, sorotan: 5, damar: 1 }, go: s => penyusupAktif() ? 'b16_penyusup' : 'b16_amplop', note: 'Malam kedua hujan turun. Spanduk dijadikan selimut. Tidak ada yang pulang.' }
     ]
   },

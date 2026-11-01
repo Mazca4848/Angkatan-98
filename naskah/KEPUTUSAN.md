@@ -81,7 +81,7 @@ Cara mengukur: catat waktu bermain dari tester uji tertutup per babak. Uji bot t
 
 0. Simpan versi sekarang sebagai v1 di git, jalankan uji tertutup Play Store.
 1. Isyarat adegan dan ekspresi. **(selesai: `js/isyarat.js`, ekspresi sedih/senyum/kaget, sorotan otomatis, raut di percakapan)**
-2. Batas pilihan dan riwayat teks.
+2. Batas pilihan dan riwayat teks. **(selesai: `pilihanHTML` dengan kelompok dan "Pilihan lain", satu jalan jadi tombol lanjut, laci "Riwayat cerita", bot memeriksa maksimal 4)**
 3. Hari yang Berulang, peta kampus, tas.
 4. Tokoh sampingan, pelapor, suara masyarakat.
 5. Peta kota dan transportasi.
