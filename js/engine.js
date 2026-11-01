@@ -346,7 +346,8 @@ function meta(n, extra) {
   const bab = val(n.bab), judul = val(n.judul), head = bab != null ? `${typeof bab === 'number' ? 'Bab ' + bab : bab} · ${judul}` : judul;
   return `<p class="meta"><span>${head}</span><span>${val(n.waktu) || ''}${extra ? ' · ' + extra : ''}</span></p>` + deltasHTML(S.ui.enterDelta);
 }
-const prose = n => n.text ? `<div class="prose">${[].concat(val(n.text)).map(p => `<p>${p}</p>`).join('')}</div>` : '';
+// data-i: nomor paragraf, untuk mencocokkan isyarat adegan (n.isyarat[i]) saat paragraf itu muncul
+const prose = n => n.text ? `<div class="prose">${[].concat(val(n.text)).map((p, i) => `<p data-i="${i}">${p}</p>`).join('')}</div>` : '';
 function kabarHTML(bisaSebar = false) {
   const ks = S.ui.kabar;
   if (!ks || !ks.length) return '';
@@ -371,6 +372,8 @@ function lookHTML(n) {
 /* ---------- percakapan ---------- */
 // arah jawaban seperti di obrolan kos: s = sejalan, n = mengambang, l = berlawanan. Opsi: [ucapan, arah, balasan, {afeksi tokoh lain}, {fx diam-diam}]
 const DIALOG = {}, ARAH = { s: 2, n: 0, l: -2 };
+// raut saat jawabanmu berlawanan: sebagian marah, sebagian sedih, menurut wataknya
+const RAUT_BERLAWANAN = { damar: 'marah', tigor: 'marah', bapak: 'marah', asep: 'marah', wahyu: 'marah', ratna: 'marah', yudi: 'gugup', ibu: 'sedih', dika: 'sedih', mei: 'sedih', bimo: 'sedih', laras: 'sedih', dimas: 'sedih', fikri: 'sedih', yos: 'sedih' };
 const obrolanAda = n => (val(n.bicara) || []).filter(k => DIALOG[k] && !S.f['dlg_' + k] && (!DIALOG[k].req || DIALOG[k].req(S)));
 const giliranIni = g => { const G = DIALOG[g.k].giliran[g.i]; return { kata: val(G.kata), opsi: val(G.opsi) }; };
 const bicaraHTML = n => { const ks = S.ui.last ? [] : obrolanAda(n); return ks.length ? `<div class="look"><span class="label">Bicara</span>${ks.map(k => `<button type="button" class="chip" data-a="bicara" data-v="${k}">${val(DIALOG[k].nama)}</button>`).join('')}</div>` : ''; };
@@ -389,11 +392,12 @@ function ucap(v) {
   if (!o) return;
   const [t, arah, balas, lain, fx] = o;
   ubahHati(D.siapa, ARAH[arah]);
+  S.ui.raut = { ...S.ui.raut, [D.siapa]: arah === 's' ? 'senyum' : arah === 'l' ? RAUT_BERLAWANAN[D.siapa] || 'marah' : 'tenang' };
   for (const [id, n] of Object.entries(lain || {})) ubahHati(id, n);
   if (fx) apply(fx);
   g.jejak.push({ kata: G.kata, jawab: t, balas: val(balas) });
   g.i++;
-  if (g.i >= D.giliran.length) { g.selesai = true; g.tutup = rasa(D.siapa, D.tutup); S.f['dlg_' + g.k] = true; if (D.hadiah && D.hadiah[sikap(D.siapa)]) apply(D.hadiah[sikap(D.siapa)]); }
+  if (g.i >= D.giliran.length) { g.selesai = true; g.tutup = rasa(D.siapa, D.tutup); S.ui.raut[D.siapa] = { hangat: 'senyum', dingin: RAUT_BERLAWANAN[D.siapa] || 'marah', biasa: 'tenang' }[sikap(D.siapa)]; S.f['dlg_' + g.k] = true; if (D.hadiah && D.hadiah[sikap(D.siapa)]) apply(D.hadiah[sikap(D.siapa)]); }
   render('.dlg');
 }
 // pergi saat diajak bicara tetap terasa
@@ -432,13 +436,14 @@ function choicesHTML(list, label = 'Apa yang kamu lakukan?') {
 }
 function resultHTML() {
   const L = S.ui.last;
-  return `<section class="result" tabindex="-1">${L.pick ? `<p class="pick"><span class="label">Kamu memilih</span> ${L.pick}</p>` : ''}${[].concat(L.note).map(p => `<p>${p}</p>`).join('')}${L.batin ? `<p class="batin">${L.batin}</p>` : ''}${deltasHTML(L.deltas)}<button type="button" class="btn" data-a="next">${L.lanjut || 'Lanjut'}</button></section>`;
+  return `<section class="result" tabindex="-1">${L.pick ? `<p class="pick"><span class="label">Kamu memilih</span> ${L.pick}</p>` : ''}${[].concat(L.note).map((p, i) => `<p data-n="${i}">${p}</p>`).join('')}${L.batin ? `<p class="batin">${L.batin}</p>` : ''}${deltasHTML(L.deltas)}<button type="button" class="btn" data-a="next">${L.lanjut || 'Lanjut'}</button></section>`;
 }
 function setResult(pickText, note, b, goId, lanjut) {
   // gagal: lebih banyak hal penting yang memburuk daripada membaik (stat tersembunyi ikut dihitung, tidak ditampilkan)
   const deltas = diff(b), arah = ['massa', 'pengaruh', 'nyali', 'sorotan', 'kuasa', 'bapak', 'ibu', 'dika', ...Object.keys(SENIOR)].map(k => Math.sign((get(k) - b[k]) * (BAD_UP.includes(k) ? -1 : 1))).filter(Boolean);
   const buruk = arah.reduce((a, x) => a + x, 0) < 0;
-  S.ui.last = { pick: pickText, note, deltas, go: goId, lanjut, batin: renungan(buruk, arah.length) };
+  S.ui.last = { pick: pickText, note, deltas, go: goId, lanjut, batin: renungan(buruk, arah.length), isyarat: S.ui.isyaratNote };
+  S.ui.isyaratNote = null;
   // keputusan yang dipilih sendiri diingat untuk malam-malam tanpa tidur
   if (pickText && !NODES[S.node].aman) {
     S.f.keputusan = { t: pickText, lain: S.ui.lainPilihan || [], buruk, bulan: S.bulan };
@@ -517,7 +522,7 @@ const kutipan = () => S.buku.selesai.length;
 /* ---------- render ---------- */
 function myKtm() { return { nama: S.nama.trim() || 'Nama Lengkap', nim: S.nim || `96.${FAK[S.fak].kode}.____`, fak: S.fak, ang: '1996', face: FOTO[S.foto], stempel: 'asli' }; }
 function renderScene() {
-  const n = NODES[S.node], svg = `<g filter="url(#rough)">${SCENES[val(n.scene)](S, n)}</g><rect width="960" height="540" filter="url(#grain)" opacity=".5" style="mix-blend-mode:multiply" pointer-events="none"/>`;
+  const n = NODES[S.node], svg = `<g filter="url(#rough)">${SCENES[val(n.scene)](S, n)}${(S.ui.tambah || []).join('')}</g><rect width="960" height="540" filter="url(#grain)" opacity=".5" style="mix-blend-mode:multiply" pointer-events="none"/>`;
   $('scene').setAttribute('aria-label', val(n.alt) || n.judul);
   // gambar ulang hanya bila isinya berubah, supaya napas tokoh dan gerak kamera tidak terpotong (id clipPath selalu baru, abaikan)
   const kunci = svg.replace(/hc\d+/g, '');
@@ -529,12 +534,13 @@ function render(focusSel) {
   if (BOT) return;
   const n = NODES[S.node], baru = tampil.node !== S.node, p = $('panel'), lama = lebarBar();
   tampil.node = S.node;
-  selesaiUngkap();
+  selesaiUngkap(baru);
   $('hud').innerHTML = hudHTML(n);
   geserBar(lama);
   renderScene();
   p.innerHTML = MODES[n.mode || 'story'].panel(n);
   $('notes-body').innerHTML = notesHTML();
+  $('stage').dataset.lampu = S.ui.lampu || '';
   // momen berbatas waktu tampil sekaligus: jam sudah berjalan
   if (baru && !S.ui.waktu) ungkap([...p.children].flatMap(el => el.matches('.prose') ? [...el.children] : [el]));
   else if (focusSel === '.result' || focusSel === '.obs') { const el = p.querySelector(focusSel); if (el) ungkap([...el.children]); }
@@ -552,19 +558,72 @@ const tampil = { node: null, svg: '', waktu: null };
 let ungkapT = 0;
 // teks muncul bertahap, lamanya mengikuti panjang kalimat; klik atau tombol apa pun menampilkan semuanya
 function ungkap(els) {
-  if (reduced || !els.length) return;
+  if (!els.length) return;
+  if (reduced) { for (const el of els) jalankanIsyarat(el, false); return; }
   let t = 0;
-  for (const el of els) { el.style.setProperty('--tunda', t + 'ms'); el.classList.add('ungkap'); t += clamp(el.textContent.length * 9, 120, 1400); }
+  for (const el of els) {
+    el.style.setProperty('--tunda', t + 'ms'); el.classList.add('ungkap');
+    if (el.dataset.i || el.dataset.n) tertunda.push([setTimeout(() => jalankanIsyarat(el, true), t), el]);
+    t += clamp(el.textContent.length * 9, 120, 1400);
+  }
   $('panel').classList.add('mengungkap');
   clearTimeout(ungkapT);
-  ungkapT = setTimeout(selesaiUngkap, t + 500);
+  ungkapT = setTimeout(() => { selesaiUngkap(); setTimeout(() => { if (!S.ui.obs && !S.ui.last) sorot(null); }, 1500); }, t + 500);
 }
-function selesaiUngkap() {
+// dilewati atau selesai: isyarat yang belum jalan diterapkan sekaligus; kalau adegan berganti, isyarat lama dibuang
+function selesaiUngkap(buang) {
   clearTimeout(ungkapT);
+  const sisa = tertunda.splice(0);
+  for (const [id, el] of sisa) { clearTimeout(id); if (!buang) jalankanIsyarat(el, false); }
   const p = $('panel');
   if (!p.classList.contains('mengungkap')) return;
   p.classList.remove('mengungkap');
   for (const el of p.querySelectorAll('.ungkap')) el.classList.remove('ungkap');
+}
+
+/* ---------- isyarat adegan: gambar ikut bercerita saat paragraf muncul ---------- */
+// isyarat: { raut: { tokoh: 'sedih' }, lampu: 'redup'|'padam'|'senter'|'', tambah: svg, getar: true, fokus: id hot | false }
+// paragraf narasi memakai n.isyarat[i]; catatan hasil pilihan memakai c.isyarat[i] dari pilihan yang diambil
+const tertunda = [];
+function isyaratDari(el) {
+  const n = NODES[S.node];
+  if (el.dataset.i) return (val(n.isyarat) || [])[+el.dataset.i];
+  if (el.dataset.n) return ((S.ui.last && S.ui.last.isyarat) || [])[+el.dataset.n];
+  return null;
+}
+function jalankanIsyarat(el, gerak) {
+  const c = isyaratDari(el) || {}, kunci = el.dataset.i ? 'i' + el.dataset.i : 'n' + el.dataset.n;
+  const sudah = S.ui.isyaratSudah = S.ui.isyaratSudah || {};
+  let gambar = false;
+  if (!sudah[kunci]) {
+    sudah[kunci] = true;
+    if (c.raut) { S.ui.raut = { ...S.ui.raut, ...c.raut }; gambar = true; }
+    if (c.tambah) { (S.ui.tambah = S.ui.tambah || []).push(val(c.tambah)); gambar = true; }
+    if (c.lampu !== undefined) { S.ui.lampu = c.lampu; $('stage').dataset.lampu = c.lampu || ''; }
+    if (c.getar && gerak && !reduced) { const st = $('stage'); st.classList.remove('getar'); void st.offsetWidth; st.classList.add('getar'); }
+  }
+  if (gambar) renderScene();
+  if (gerak && c.fokus !== false) sorot(c.fokus || fokusOtomatis(el.textContent));
+}
+// paragraf yang menyebut orang atau benda di adegan menyorotnya; yang paling awal disebut menang
+const polaKata = k => new RegExp('(^|[^a-z])' + k.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^a-z])');
+function fokusOtomatis(teks) {
+  const t = teks.toLowerCase();
+  let pilih = null, posisi = Infinity;
+  for (const h of $('scene').querySelectorAll('[data-hot]')) {
+    for (const kata of [h.getAttribute('aria-label'), h.dataset.hot.length >= 4 ? h.dataset.hot : null]) {
+      const m = kata && t.match(polaKata(kata));
+      if (m && m.index < posisi) { posisi = m.index; pilih = h.dataset.hot; }
+    }
+  }
+  return pilih;
+}
+function sorot(id) {
+  if (BOT || reduced) return;
+  if (!id) { $('scene').style.transform = ''; return; }
+  condong(id);
+  const h = $('scene').querySelector(`[data-hot="${id}"]`);
+  if (h) { h.classList.remove('disorot'); void h.getBBox(); h.classList.add('disorot'); setTimeout(() => h.classList.remove('disorot'), 1400); }
 }
 // kamera: adegan baru didekati pelan; benda yang diamati ditatap
 function kamera(baru) {

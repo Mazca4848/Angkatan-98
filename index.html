@@ -83,6 +83,16 @@ body {
 .blink i:first-child { top: 0; transform-origin: top; }
 .blink i:last-child { bottom: 0; transform-origin: bottom; }
 .stage.shut .blink i { transform: scaleY(1); }
+/* isyarat adegan: lampu, getar, dan sorotan benda yang sedang diceritakan */
+.stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .9s ease; background: #0c0a09; }
+.stage[data-lampu="redup"]::after { opacity: .35; }
+.stage[data-lampu="padam"]::after { opacity: .7; }
+.stage[data-lampu="senter"]::after { opacity: 1; background: radial-gradient(circle at 58% 42%, transparent 0 16%, rgba(12, 10, 9, .55) 26%, rgba(12, 10, 9, .85) 42%); }
+.keterangan, .blink { z-index: 2; }
+.stage.getar { animation: getar .45s ease-out; }
+@keyframes getar { 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
+.hot.disorot { animation: disorot 1.4s ease-out; }
+@keyframes disorot { 0%, 100% { filter: none; } 30% { filter: drop-shadow(0 0 3px var(--paper)) drop-shadow(0 0 12px var(--red-hi)); } }
 .panel { background: var(--paper); color: var(--ink); padding: clamp(16px, 3vw, 28px); display: grid; gap: 14px; min-width: 0; }
 .panel:focus { outline: none; }
 .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin: 0; padding-bottom: 6px; border-bottom: 4px double var(--ink); font-size: .76rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
@@ -191,7 +201,7 @@ button.slot { font: inherit; color: inherit; background: none; text-align: left;
   .docs, .fak, .notes-grid { grid-template-columns: minmax(0, 1fr); }
   .slots, .posgrid { grid-template-columns: minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .blink i, .stage.shut .blink i, .kam > svg { transition: none; } .neon, .kam.dorong, .stage .napas, .stage .napas .mata { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .blink i, .stage.shut .blink i, .kam > svg { transition: none; } .neon, .kam.dorong, .stage .napas, .stage .napas .mata, .stage.getar, .hot.disorot { animation: none; } .stage::after { transition: none; } }
 /* laptop dan layar lebar: adegan di kiri, naskah di kanan; halaman pas satu layar, hanya naskah yang bergulir */
 @media (min-width: 1000px) and (min-height: 520px) {
   html, body { height: 100%; }
@@ -244,6 +254,7 @@ button.slot { font: inherit; color: inherit; background: none; text-align: left;
 <script src="js/story4.js"></script>
 <script src="js/dialog.js"></script>
 <script src="js/selingan.js"></script>
+<script src="js/isyarat.js"></script>
 <script src="js/suara.js"></script>
 <script>
 // self-check: setiap tujuan pilihan yang tertulis langsung harus ada

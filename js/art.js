@@ -91,13 +91,16 @@ function face(f) {
   if (f.fh === 'jenggot') for (let i = 0; i < 27; i++) s += `<circle cx="${72 + (i % 9) * 7}" cy="${142 + Math.floor(i / 9) * 6}" r="2.2" fill="${K}"/>`;
   if (f.fh === 'brewok') s += `<path d="M40 104 Q50 162 100 168 Q150 162 160 104 L148 106 Q140 146 100 150 Q60 146 52 106Z" fill="${K}"/>`;
   s += '</g>';
-  const brow = { tenang: ['M70 84 L92 82', 'M108 82 L130 84'], gugup: ['M70 86 L92 79', 'M108 79 L130 86'], marah: ['M70 79 L92 87', 'M108 87 L130 79'] }[mood];
+  const brow = { tenang: ['M70 84 L92 82', 'M108 82 L130 84'], gugup: ['M70 86 L92 79', 'M108 79 L130 86'], marah: ['M70 79 L92 87', 'M108 87 L130 79'], sedih: ['M70 89 L92 80', 'M108 80 L130 89'], senyum: ['M70 83 L92 80', 'M108 80 L130 83'], kaget: ['M70 77 L92 73', 'M108 73 L130 77'] }[mood] || [];
   s += `<path d="${brow[0]} ${brow[1]}" ${ink(6)}/>`;
-  s += f.closed ? `<path d="M72 97 Q81 101 90 97 M110 97 Q119 101 128 97" ${ink(4)}/>` : `<path class="mata" d="M71 97 Q81 89 91 97 Q81 102 71 97Z M109 97 Q119 89 129 97 Q119 102 109 97Z" fill="${K}"/>`;
+  // mata: kaget melebar, senyum menyipit; sisanya bentuk biasa
+  const mata = mood === 'kaget' ? 'M69 97 Q81 85 93 97 Q81 106 69 97Z M107 97 Q119 85 131 97 Q119 106 107 97Z' : mood === 'senyum' ? 'M71 98 Q81 91 91 98 Q81 100 71 98Z M109 98 Q119 91 129 98 Q119 100 109 98Z' : 'M71 97 Q81 89 91 97 Q81 102 71 97Z M109 97 Q119 89 129 97 Q119 102 109 97Z';
+  s += f.closed ? `<path d="M72 97 Q81 101 90 97 M110 97 Q119 101 128 97" ${ink(4)}/>` : `<path class="mata" d="${mata}" fill="${K}"/>`;
+  if (mood === 'sedih' && !f.closed) s += `<path d="M86 106 q-2 6 0 10" ${ink(2.5)}/>`;
   if (f.tired) s += `<path d="M72 106 Q81 111 90 106 M110 106 Q119 111 128 106" ${ink(3)}/>`;
   s += `<path d="M100 98 L93 117 L104 119" ${ink(4)}/>`;
-  const mouth = { tenang: 'M88 133 Q100 136 112 133', gugup: 'M88 134 Q94 129 100 134 Q106 139 112 134', marah: 'M88 137 Q100 128 112 137' }[mood];
-  s += `<path d="${mouth}" ${ink(5)}/>`;
+  const mouth = { tenang: 'M88 133 Q100 136 112 133', gugup: 'M88 134 Q94 129 100 134 Q106 139 112 134', marah: 'M88 137 Q100 128 112 137', sedih: 'M90 136 Q100 131 110 136', senyum: 'M86 129 Q100 143 114 129' }[mood];
+  s += mood === 'kaget' ? `<ellipse cx="100" cy="134" rx="6" ry="8" fill="${K}"/>` : `<path d="${mouth || 'M88 133 Q100 136 112 133'}" ${ink(5)}/>`;
   if (f.fh === 'kumis') s += `<path d="M84 126 Q100 118 116 126 Q100 130 84 126Z" fill="${K}"/>`;
   if (f.mark === 'tahi') s += `<circle cx="124" cy="120" r="3.5" fill="${K}"/>`;
   if (f.mark === 'luka') s += `<path d="M122 104 L134 124 M124 112 L130 110 M127 118 L133 116" ${ink(3)}/>`;
@@ -119,7 +122,14 @@ function face(f) {
 }
 
 // lapisan .napas: tokoh di panggung bernapas dan berkedip, fase digeser menurut posisi supaya tidak serempak
-const person = (f, x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})"><g class="napas" style="--fase:-${Math.abs(Math.round(x * 7 + y * 3)) % 47 / 10}s">${face(f)}</g></g>`;
+// ekspresi tokoh bisa diganti per adegan lewat S.ui.raut[id]; id = kunci di C tanpa akhiran varian (bapakLebaran → bapak)
+let ID_TOKOH = null;
+const idTokoh = f => (ID_TOKOH = ID_TOKOH || new Map(Object.entries(C).map(([k, v]) => [v, k.replace(/(Lebaran|Maba|Kurus|Tua)$/, '')]))).get(f);
+function rautKu(f) {
+  const id = idTokoh(f), r = typeof S !== 'undefined' && S && S.ui && S.ui.raut && id && S.ui.raut[id];
+  return r ? { ...f, mood: r } : f;
+}
+const person = (f, x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})"${idTokoh(f) ? ` data-tokoh="${idTokoh(f)}"` : ''}><g class="napas" style="--fase:-${Math.abs(Math.round(x * 7 + y * 3)) % 47 / 10}s">${face(rautKu(f))}</g></g>`;
 const hot = (id, label, inner) => `<g class="hot" data-hot="${id}" tabindex="0" role="button" aria-label="${label}">${inner}</g>`;
 const silhouette = (x, y, sc, fill = K) => `<g transform="translate(${x} ${y}) scale(${sc})"><circle cx="0" cy="-34" r="17" fill="${fill}"/><path d="M-30 30 Q-28 -12 0 -12 Q28 -12 30 30Z" fill="${fill}"/></g>`;
 

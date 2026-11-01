@@ -4,7 +4,7 @@ const fs = require('fs'), vm = require('vm'), path = require('path');
 const N = Number(process.argv[2]) || 200;
 const ctx = { console, setTimeout: f => f(), requestAnimationFrame: f => f() };
 vm.createContext(ctx);
-for (const f of ['art', 'scenes', 'kit', 'engine', 'modes', 'minigame', 'story1', 'story2', 'story3', 'story4', 'dialog', 'selingan']) {
+for (const f of ['art', 'scenes', 'kit', 'engine', 'modes', 'minigame', 'story1', 'story2', 'story3', 'story4', 'dialog', 'selingan', 'isyarat']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8'), ctx, { filename: f + '.js' });
 }
 const hasil = vm.runInContext(`

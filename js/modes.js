@@ -23,6 +23,7 @@ MODES.story = {
     const note = [].concat(val(c.note) || [], gagal ? BOCOR_NOTE : [], sindir).filter(Boolean), g = val(c.go);
     if (!note.length) return go(g);
     S.ui.lainPilihan = visibleChoices(val(n.choices)).map(([x]) => val(x.t)).filter(t => t !== val(c.t));
+    S.ui.isyaratNote = val(c.isyarat) || null;
     setResult(val(c.t), note, b, g, c.lanjut);
   },
   actions(n) {
