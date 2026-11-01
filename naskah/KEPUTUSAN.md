@@ -18,6 +18,10 @@ Status: **selesai** = sudah ada di kode (per 1 November 2026) · **disetujui** =
 | Hendra sebagai intel yang terus kembali; Yos menolong sampai akhir; nasib Fikri | `js/story*.js`, `js/selingan.js` |
 | Lima momen ringan, suara batin, renungan sesudah memilih, insomnia tiga jenis, jejak pilihan di ending | `js/selingan.js` |
 | Koleksi ending, ukuran teks | `js/engine.js`, `js/modes.js` |
+| Versi simpanan: simpanan yang adegannya sudah tidak ada memunculkan pesan, bukan hilang diam-diam; `PINDAH_ADEGAN` untuk memetakan id lama | `js/engine.js` |
+| Kitab cerita: tokoh, umur, tanggal lahir, gaya bicara, garis waktu, nasib | `naskah/KITAB.md` |
+| Kit adegan: 24 bagian latar yang bisa dirakit + galeri | `js/kit.js`, `node tools/build.mjs kit` |
+| Satu skrip build untuk artifact, Android (font lokal, pengingat `versionCode`), dan galeri | `tools/build.mjs` |
 
 ## Disetujui, belum dikerjakan
 
@@ -57,6 +61,21 @@ Status: **selesai** = sudah ada di kode (per 1 November 2026) · **disetujui** =
 - Tokoh yang berjalan bebas (game tetap orang pertama).
 - Garis waktu di HUD (tidak perlu).
 - Uji tata letak HP (nanti).
+
+## Anggaran durasi
+
+Target satu permainan penuh: **paling lama 2 jam**. Kalau satu bagian melewati anggarannya, potong di bagian itu, jangan ambil jatah bagian lain.
+
+| Bagian | Anggaran |
+|---|---|
+| Prolog dan Babak I (sampai Bab 6) | 25 menit |
+| Babak II (Bab 7–11) | 25 menit |
+| Babak III dan IV (buron sampai 21 Mei 1998) | 25 menit |
+| Babak V baru (Bab 18–20) | 15 menit |
+| Tujuh Hari yang Berulang | 25 menit (3–4 menit per hari) |
+| Selingan, insomnia, kilas balik | 5 menit |
+
+Cara mengukur: catat waktu bermain dari tester uji tertutup per babak. Uji bot tidak bisa mengukur ini.
 
 ## Urutan implementasi yang disarankan
 

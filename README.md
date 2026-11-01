@@ -52,7 +52,23 @@ Mekanik utama: bar kuasa rezim yang harus kamu kosongkan lewat aksi sebelum 21 M
 | `js/story1.js` – `js/story4.js` | naskah babak I sampai V dan ending |
 | `js/dialog.js` | percakapan dengan keluarga, senior, dan kader; jawabanmu menggeser afeksi tersembunyi tiap tokoh |
 | `js/suara.js` | suara latar dan bunyi kejadian, disintesis dengan Web Audio API tanpa berkas rekaman |
+| `js/kit.js` | kit adegan: bagian latar yang bisa dirakit untuk tempat baru |
+| `js/selingan.js` | momen ringan, malam tanpa tidur, suara batin, dan jejak pilihan di akhir cerita |
+| `tools/build.mjs` | membangun satu berkas HTML untuk artifact, Android, dan galeri kit |
+| `naskah/` | kitab cerita, keputusan desain v2, rencana peta, dan draf naskah |
 | `tests/bot.js` | uji otomatis yang memainkan ratusan permainan acak |
+
+## Membangun
+
+GitHub Pages memakai `index.html` apa adanya. Untuk versi lain, butuh [Node.js](https://nodejs.org) 18 atau lebih baru:
+
+```bash
+node tools/build.mjs artifact            # dist/angkatan98.html untuk artifact claude.ai
+node tools/build.mjs android --naikkan   # www/index.html proyek Android, versionCode dinaikkan
+node tools/build.mjs kit                 # dist/galeri-kit.html, galeri kit adegan
+```
+
+Lokasi proyek Android bawaan adalah `../Documents/angkatan98-android`. Ganti lewat variabel lingkungan `ANDROID_DIR`.
 
 ## Uji otomatis
 

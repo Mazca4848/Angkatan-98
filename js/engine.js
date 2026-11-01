@@ -194,7 +194,7 @@ function sebarKabar(i) {
 /* ---------- state ---------- */
 function fresh() {
   return {
-    node: 'intro', nama: 'Bagas Pratama', fak: 'Hukum', gender: 'L', foto: 0, nim: '', bulan: '1996-08', kurs: 2340,
+    versi: VERSI_SIMPAN, node: 'intro', nama: 'Bagas Pratama', fak: 'Hukum', gender: 'L', foto: 0, nim: '', bulan: '1996-08', kurs: 2340,
     kuasa: 100, pengaruh: 0, massa: 30, nyali: 50, nyaliMax: 100, sorotan: 5, jejak: 20, iklim: 10, ipk: 3, tekanan: 0, ricuh: 0, cap: 0,
     uang: { tunai: 20000, bank: 0, usd: 0, barang: 0, utang: 0 }, bankJenis: null, bankBeku: false,
     rel: { bapak: 3, ibu: 4, dika: 4 }, kagum: 0, tahu: 0, hati: {}, hatiL: {},
@@ -641,7 +641,20 @@ function koleksiHTML() {
 /* ---------- simpan ---------- */
 const KEY = 'angkatan98-simpan';
 function save() { if (BOT) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* penyimpanan tidak tersedia */ } }
-function loadSave() { try { const d = JSON.parse(localStorage.getItem(KEY)); return d && d.node && NODES[d.node] ? d : null; } catch (e) { return null; } }
+// versi simpanan: naikkan setiap kali adegan atau isi state berubah sampai simpanan lama tidak cocok lagi.
+// Simpanan v1 tidak punya kolom versi, jadi dianggap versi 1.
+const VERSI_SIMPAN = 1;
+// adegan yang diganti nama atau dihapus: id lama -> id baru. Diisi saat v2 mengganti kos1–kos7.
+const PINDAH_ADEGAN = {};
+let simpananUsang = false;
+function cocokkan(d) {
+  if (!d || (d.versi || 1) > VERSI_SIMPAN) return null;
+  if (PINDAH_ADEGAN[d.node]) d.node = PINDAH_ADEGAN[d.node];
+  if (!d.node || !NODES[d.node]) { simpananUsang = true; return null; }
+  d.versi = VERSI_SIMPAN;
+  return d;
+}
+function loadSave() { try { return cocokkan(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return null; } }
 function clearSave() { try { localStorage.removeItem(KEY); localStorage.removeItem(KEY + '-babak'); } catch (e) { /* abaikan */ } CEKPOIN = null; }
 // checkpoint: keadaan tepat sebelum babak dimulai, supaya ending pahit tidak memaksa mengulang satu jam permainan
 const BABAK = ['b1_gerbang', 'b4_bus', 'b7_toko', 'b11_razia', 'b14_terminal', 'b18_semanggi'];
@@ -650,11 +663,17 @@ function simpanBabak(id) {
   CEKPOIN = JSON.stringify({ id, s: S });
   if (!BOT) try { localStorage.setItem(KEY + '-babak', CEKPOIN); } catch (e) { /* penyimpanan tidak tersedia */ }
 }
-function adaBabak() { if (CEKPOIN) return true; try { return !BOT && !!localStorage.getItem(KEY + '-babak'); } catch (e) { return false; } }
-function muatBabak() {
+// checkpoint yang adegannya sudah tidak ada di versi ini dianggap tidak ada
+function bacaBabak() {
   let d = CEKPOIN;
   if (!d && !BOT) try { d = localStorage.getItem(KEY + '-babak'); } catch (e) { /* abaikan */ }
-  if (!d) return;
-  const x = JSON.parse(d); S = x.s; S.ending = null;
+  if (!d) return null;
+  try { const x = JSON.parse(d), id = PINDAH_ADEGAN[x.id] || x.id, s = cocokkan({ ...x.s, node: x.s.node }); return NODES[id] && s ? { id, s } : null; } catch (e) { return null; }
+}
+const adaBabak = () => !!bacaBabak();
+function muatBabak() {
+  const x = bacaBabak();
+  if (!x) return;
+  S = x.s; S.ending = null;
   go(x.id);
 }
