@@ -120,7 +120,7 @@ MODES.hari = {
   panel(n) {
     const m = S.m;
     if (m.step === 'uang' || m.step === 'tugas') return MODES.kos.panel(n) + tasHTML();
-    let h = meta(n, `pukul ${fmtJam(m.jam)} · jam malam ${fmtJam(jamMalam())}`);
+    let h = meta(n, `${fmtJam(m.jam)} · jam malam ${fmtJam(jamMalam())}`);
     if (m.step === 'main') return h + panelMain(m);
     if (m.step === 'hasil') return h + `<section class="result" tabindex="-1"><p class="label">Halaman buku catatan</p><ul class="rules">${m.out.map(l => `<li>${l}</li>`).join('')}</ul>${m.ev ? `<div class="event"><p class="label">Kejadian</p><p>${m.ev}</p></div>` : ''}${deltasHTML(m.deltas)}<button type="button" class="btn" data-a="goto" data-v="${S.ending ? 'akhir' : n.next}">Lanjut</button></section>`;
     if (m.razia) h += `<div class="event"><p class="label">Razia di jalan</p>${m.razia.map(l => `<p>${l}</p>`).join('')}</div>`;

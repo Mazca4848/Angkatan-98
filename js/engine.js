@@ -298,6 +298,7 @@ function aksi(a, v) {
   if (a === 'grup') { S.ui.grup = (S.ui.grup || []).concat(v); return render('.ask'); }
   if (a === 'grupkembali') { S.ui.grup = (S.ui.grup || []).slice(0, -1); return render('.ask'); }
   S.ui.grup = null;
+  if (a === 'halaman') return gantiHalaman(+v);
   if (a === 'look') return look(v);
   if (a === 'bicara') return mulaiObrolan(v);
   if (a === 'ucap') return ucap(+v);
@@ -418,7 +419,7 @@ function dlgHTML() {
   const g = S.ui.dlg, D = DIALOG[g.k], n = g.jejak.length;
   // .baru: bagian yang baru muncul sesudah jawaban terakhir, untuk diungkap bertahap
   const baris = (x, j) => { const b = j === n - 1 ? ' baru' : ''; return `<p class="ucap">${x.kata}</p><p class="jawab${b}">“${x.jawab}”</p>${x.balas ? `<p class="ucap${b}">${x.balas}</p>` : ''}`; };
-  let h = `<div class="dlg" tabindex="-1"><p class="label">Bicara dengan ${val(D.nama)}</p>${g.jejak.map(baris).join('')}`;
+  let h = `<div class="dlg" tabindex="-1"><p class="label">Bicara dengan ${val(D.nama)}</p>${g.jejak.slice(-1).map(x => baris(x, n - 1)).join('')}`;
   if (g.selesai) return h + `<p class="ucap baru">${g.tutup}</p></div>`;
   const G = giliranIni(g);
   return h + `<p class="ucap baru">${G.kata}</p><ol class="choices baru">${G.opsi.map((o, v) => `<li><button type="button" class="choice" data-a="ucap" data-v="${v}"><span class="key" aria-hidden="true">${'ABCD'[v]}</span><span>${o[0]}</span></button></li>`).join('')}</ol></div>`;
@@ -583,11 +584,14 @@ function render(focusSel) {
   geserBar(lama);
   renderScene();
   p.innerHTML = MODES[n.mode || 'story'].panel(n);
+  p.scrollTop = 0;
+  const hal = halamankan(p, baru, focusSel);
   $('notes-body').innerHTML = notesHTML();
   $('stage').dataset.lampu = S.ui.lampu || '';
   if ($('riwayat') && $('riwayat').open) $('riwayat-body').innerHTML = riwayatHTML();
   // momen berbatas waktu tampil sekaligus: jam sudah berjalan
-  if (baru && !S.ui.waktu) ungkap([...p.children].flatMap(el => el.matches('.prose') ? [...el.children] : [el]));
+  if (baru && !S.ui.waktu) ungkap(unitPanel(p).filter(el => !el.hidden && !el.matches('.halaman')));
+  else if (tampil.halPindah) { tampil.halPindah = false; ungkap(hal); }
   else if (focusSel === '.result' || focusSel === '.obs') { const el = p.querySelector(focusSel); if (el) ungkap([...el.children]); }
   else if (focusSel === '.dlg') ungkap([...p.querySelectorAll('.dlg .baru')]);
   if (focusSel) {
@@ -596,6 +600,40 @@ function render(focusSel) {
   }
   if (typeof Suara !== 'undefined') Suara.perbarui();
 }
+
+/* ---------- halaman panel ---------- */
+// di laptop panel naskah tidak boleh digulir: isinya dipecah per halaman. Halaman terakhir memuat pilihan
+// beserta paragraf sebanyak yang muat sebelumnya. Di layar sempit halaman tetap bergulir seperti biasa
+const LEBAR = typeof matchMedia !== 'undefined' ? matchMedia('(min-width: 1000px) and (min-height: 520px)') : null;
+// wadah yang boleh dipecah antarhalaman: narasi, percakapan, catatan hasil dan daftar barisnya
+const PECAH = '.prose, .dlg, .result, .result > .rules, .intro';
+const unitPanel = p => [...p.children].flatMap(el => el.matches(PECAH) ? unitPanel(el) : [el]);
+function halamankan(p, baru, focusSel) {
+  const unit = unitPanel(p).filter(el => !el.matches('.meta'));
+  if (!LEBAR || !LEBAR.matches || p.scrollHeight <= p.clientHeight + 2) { tampil.hal = 0; return unit; }
+  const cs = getComputedStyle(p), gap = parseFloat(cs.rowGap) || 0, meta = p.querySelector(':scope > .meta');
+  p.insertAdjacentHTML('beforeend', '<nav class="halaman"><button type="button" class="chip">‹ Kembali</button><span class="fine">1 / 9</span><button type="button" class="chip">Lanjut ›</button></nav>');
+  const nav = p.lastElementChild;
+  const muat = p.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (meta ? meta.offsetHeight + gap : 0) - nav.offsetHeight - gap;
+  const atas = el => el.getBoundingClientRect().top, bawah = el => el.getBoundingClientRect().bottom;
+  // disusun dari belakang supaya pilihan tidak pernah terpisah dari paragraf terakhir
+  const hal = [];
+  for (let akhir = unit.length - 1; akhir >= 0;) {
+    let awal = akhir;
+    while (awal > 0 && bawah(unit[akhir]) - atas(unit[awal - 1]) <= muat) awal--;
+    hal.unshift(unit.slice(awal, akhir + 1)); akhir = awal - 1;
+  }
+  const f = focusSel && p.querySelector(focusSel);
+  let i = baru ? 0 : tampil.halPaksa != null ? tampil.halPaksa : f ? hal.findIndex(h => h.some(el => el === f || el.contains(f) || f.contains(el))) : hal.length - 1;
+  tampil.halPaksa = null;
+  i = tampil.hal = clamp(i < 0 ? hal.length - 1 : i, 0, hal.length - 1);
+  hal.forEach((h, j) => { if (j !== i) for (const el of h) el.hidden = true; });
+  for (const w of [...p.querySelectorAll(PECAH)].reverse()) w.hidden = [...w.children].every(el => el.hidden);
+  if (hal.length < 2) { nav.remove(); return hal[i]; }
+  nav.innerHTML = `${i ? `<button type="button" class="chip" data-a="halaman" data-v="${i - 1}">‹ Kembali</button>` : '<span></span>'}<span class="fine">halaman ${i + 1} dari ${hal.length}</span>${i < hal.length - 1 ? `<button type="button" class="chip" data-a="halaman" data-v="${i + 1}">Lanjut ›</button>` : '<span></span>'}`;
+  return hal[i];
+}
+function gantiHalaman(i) { tampil.halPaksa = i; tampil.halPindah = true; render(); const b = $('panel').querySelector('.halaman [data-a]:last-child') || $('panel').querySelector('.halaman [data-a]'); if (b) b.focus({ preventScroll: true }); }
 
 /* ---------- gerak ---------- */
 // semua gerak mati untuk bot dan prefers-reduced-motion; teks tetap terbaca utuh tanpa gerak

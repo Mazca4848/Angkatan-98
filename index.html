@@ -116,6 +116,7 @@ body {
 .say { font-style: italic; max-width: 68ch; }
 .laci { display: grid; gap: 6px; }
 .btn.lanjut { text-align: left; max-width: 100%; }
+.halaman { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--ink-soft); }
 /* riwayat cerita: terbaru di atas, teks lebih kecil dari naskah utama */
 .riwayat { display: grid; gap: 10px; padding-top: 8px; max-width: 68ch; font-size: .86rem; color: var(--on-desk); }
 .riwayat p { margin: 0; }
@@ -218,7 +219,15 @@ button.slot { font: inherit; color: inherit; background: none; text-align: left;
   .hud { grid-column: 1 / -1; }
   .stage { grid-column: 1; grid-row: 2 / 4; align-self: start; min-width: 0; width: min(100%, calc((100dvh - 150px) * 16 / 9)); }
   .panel { grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; }
-  .laci { grid-column: 2; grid-row: 3; max-height: 32dvh; overflow-y: auto; }
+  .laci { grid-column: 2; grid-row: 3; max-height: 32dvh; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+  .laci details[open] { flex-basis: 100%; }
+  /* ruang naskah dirapatkan supaya satu halaman memuat pilihan tanpa digulir */
+  .hud { gap: 4px 12px; }
+  .hud-stats { gap: 4px 10px; }
+  .hud-stats .bar i { width: 44px; }
+  .panel { padding: 16px 20px; gap: 10px; }
+  .choices { gap: 6px; }
+  .choice { padding: 6px 10px; }
 }
 [hidden] { display: none !important; }
 </style>
@@ -248,7 +257,7 @@ button.slot { font: inherit; color: inherit; background: none; text-align: left;
   </div>
   <section class="panel" id="panel" aria-live="polite" tabindex="-1"></section>
   <div class="laci">
-    <details class="notes"><summary>Catatan: senior, keluarga, kader, uang, buku, bukti, kabar</summary><div id="notes-body"></div></details>
+    <details class="notes"><summary title="senior, keluarga, kader, uang, buku, bukti, kabar">Catatan</summary><div id="notes-body"></div></details>
     <details class="notes" id="riwayat"><summary>Riwayat cerita</summary><div id="riwayat-body" class="riwayat"></div></details>
   </div>
 </div>
@@ -291,6 +300,15 @@ for (const ev of ['pointerup', 'pointercancel']) $('scene').addEventListener(ev,
 // klik atau tombol saat naskah sedang muncul: tampilkan semuanya sekaligus
 $('panel').addEventListener('click', selesaiUngkap, true);
 document.addEventListener('keydown', selesaiUngkap, true);
+// panah kiri dan kanan membalik halaman naskah
+document.addEventListener('keydown', e => {
+  if (!['ArrowLeft', 'ArrowRight'].includes(e.key) || e.target.closest('input, textarea')) return;
+  const b = [...document.querySelectorAll('#panel .halaman [data-a]')].find(x => x.textContent.includes(e.key === 'ArrowRight' ? 'Lanjut' : 'Kembali'));
+  if (b) { e.preventDefault(); b.click(); }
+});
+// ukuran jendela berubah: halaman disusun ulang
+let ubahT = 0;
+window.addEventListener('resize', () => { clearTimeout(ubahT); ubahT = setTimeout(() => render(), 200); });
 $('panel').addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b || b.disabled || b.type === 'submit' || !b.dataset.a) return;
