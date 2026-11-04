@@ -78,10 +78,10 @@ Semua angkatan 1996 kecuali yang ditandai. Tanggal ulang tahun dipakai untuk age
 | **Hendra** | Intel. Mengaku "teman Rudi" di malam jaga pintu 7 November 1996, KTM palsu (Ekonomi 1995), sepatu lars. Kembali di razia, ruang periksa, amplop cokelat di DPR, dan koran 2004 sebagai pejabat daerah. | — (antagonis) |
 | **Ibu kos** | Berkerudung, gugup. Radio dan televisi di ruang tamu, foto Presiden di dinding. Saksi malam Damar dibawa. | ya |
 | **Pak RT** | Kampung Rawa. Dapur umum di rumahnya. Anaknya pembawa peringatan razia. | ya |
-| **Pak Kardi** | Tukang sapu gedung. Tiga anak, satu sakit. | tidak; memperingatkan |
+| **Pak Kardi** | Tukang sapu gedung, 22 tahun bekerja (sejak 1974). Tiga anak, yang tengah sakit paru-paru. | tidak; memperingatkan |
 | **Pak Harsono** | Dosen Hukum Tata Negara. Ikut berorasi; dicoret dari daftar penguji. | tidak |
-| **Dosen wali** *(baru)* | Belum bernama. | ya, ke rektorat |
-| **Tetangga kamar** *(baru)* | Mahasiswa Teknik, tidak ikut gerakan, punya radio gelombang pendek dan motor. Ingin kerja di Batam. | kadang (menjawab intel) |
+| **Bu Retno Handayani**, dosen wali *(baru)* | Mahasiswa tahun 1978, saat kampus diduduki tentara; memilih lulus cepat. Mengisi formulir rektorat tentang mahasiswa “aktif di luar kegiatan resmi”. | sekali, kalau dingin |
+| **Joko**, tetangga kamar *(baru)* | Mahasiswa Teknik, tidak ikut gerakan, punya radio gelombang pendek dan motor. Ingin kerja di Batam. | kadang (menjawab intel) |
 | **Wisnu** *(baru)* | Sahabat SMA di Magelang. Gagal tes Akademi Militer karena mata minus satu; masuk tamtama 1996. Ada di barisan tameng. | dua arah |
 | **Pembantu Rektor III** | Membekukan PENA, Februari 1997. | — |
 | **Laki-laki bersafari** | Di DPR, menyodorkan amplop. Kalau Hendra sudah dikenal, ia adalah Hendra. | — |

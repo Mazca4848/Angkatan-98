@@ -4,12 +4,12 @@ const fs = require('fs'), vm = require('vm'), path = require('path');
 const N = Number(process.argv[2]) || 200;
 const ctx = { console, setTimeout: f => f(), requestAnimationFrame: f => f() };
 vm.createContext(ctx);
-for (const f of ['art', 'scenes', 'kit', 'engine', 'modes', 'minigame', 'hari', 'story1', 'story2', 'story3', 'story4', 'dialog', 'selingan', 'isyarat']) {
+for (const f of ['art', 'scenes', 'kit', 'engine', 'modes', 'minigame', 'hari', 'story1', 'story2', 'story3', 'story4', 'dialog', 'warga', 'selingan', 'isyarat']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8'), ctx, { filename: f + '.js' });
 }
 const hasil = vm.runInContext(`
 BOT = true;
-const r = { tunggal: {}, error: 0, ending: {}, langkah: [], dikunjungi: {}, pesan: [], kabar: { cek: 0, sebar: 0 } };
+const r = { tunggal: {}, error: 0, ending: {}, langkah: [], dikunjungi: {}, pesan: [], kabar: { cek: 0, sebar: 0 }, lapor: {}, anak: 0 };
 const main = (mulai, persiapan) => {
   S = fresh(); go('intro'); if (persiapan) persiapan(); go(mulai);
   let langkah = 0, kabarDi = null;
@@ -32,11 +32,14 @@ const main = (mulai, persiapan) => {
     for (const k of ['pengaruh', 'massa', 'nyali', 'sorotan', 'jejak']) if (!(S[k] >= 0 && S[k] <= 100)) throw new Error(k + ' di luar rentang di ' + S.node);
     for (const [id, t] of Object.entries(S.takut || {})) if (!(t >= 0 && t <= 100)) throw new Error('takut ' + id + ' di luar rentang di ' + S.node);
     for (const [id, d] of Object.entries(S.dekat || {})) if (!(d >= 0 && d <= 8)) throw new Error('kedekatan ' + id + ' di luar rentang di ' + S.node);
+    for (const [id, t] of Object.entries(S.lapor || {})) if (!(t >= 0 && t <= 3)) throw new Error('takut pelapor ' + id + ' di luar rentang di ' + S.node);
     for (const [id, h] of Object.entries(S.hati || {})) if (!(h >= -12 && h <= 12)) throw new Error('afeksi ' + id + ' di luar rentang di ' + S.node);
     if (S.ui.dlg) { r.obrolan = (r.obrolan || 0) + 1; dlgHTML(); }
   }
   if (S.node !== 'akhir') throw new Error('tidak tamat, berhenti di ' + S.node);
   MODES.akhir.panel(NODES.akhir);
+  for (const [id, t] of Object.entries(S.lapor || {})) if (t >= 3) r.lapor[id] = (r.lapor[id] || 0) + 1;
+  r.anak += Object.keys(S.anak || {}).length;
   r.ending[S.ending] = (r.ending[S.ending] || 0) + 1; r.langkah.push(langkah);
 };
 const jenewa = () => { S.f.paspor = true; S.uang.usd = 200; S.ratna = 3; S.f.damarHilang = true; S.f.buronResume = 4; S.pengaruh = 40; S.kuasa = 20; };
@@ -55,5 +58,6 @@ console.log('langkah per permainan: median', l[Math.floor(l.length / 2)], '· mi
 console.log('bab yang tidak pernah dikunjungi:', r.belum.join(', ') || '-');
 console.log('kabar dicek:', r.kabar.cek, '· diteruskan:', r.kabar.sebar);
 console.log('langkah obrolan:', r.obrolan || 0);
+console.log('pelapor yang melapor:', r.lapor, '· anak senior direkrut:', r.anak);
 console.log('adegan dengan satu pilihan saja:', Object.keys(r.tunggal).length, Object.keys(r.tunggal).slice(0, 12).join(', '));
 process.exitCode = r.error ? 1 : 0;

@@ -3,7 +3,8 @@
    jam berjalan dari 08.00 sampai jam malam. Setiap kegiatan memakan jam; efeknya memakai slot lama (SLOT di modes.js). */
 
 const JAM_MULAI = 8;
-const jamMalam = () => genderKu() === 'P' ? 21 : 24;
+// ibu kos yang mulai takut mengunci pagar sejam lebih awal
+const jamMalam = () => (genderKu() === 'P' ? 21 : 24) - (lapor('ibukos') >= 1 ? 1 : 0);
 const fmtJam = j => `${String(Math.floor(j)).padStart(2, '0')}.${j % 1 ? '30' : '00'}`;
 const JALAN_KAMPUS = 0.5, JALAN_LUAR = 1; // jam perjalanan: di dalam kampus dan kos, atau ke kampung dan Rawamangun
 
@@ -12,6 +13,7 @@ const JALAN_KAMPUS = 0.5, JALAN_LUAR = 1; // jam perjalanan: di dalam kampus dan
 const TEMPAT = {
   kamar: { nama: 'Kamar kos', kawasan: 'Kos', buka: [0, 24], peta: [70, 380, 150, 90] },
   lorong: { nama: 'Lorong kos', kawasan: 'Kos', buka: [0, 24], peta: [230, 410, 120, 60] },
+  tamu: { nama: 'Ruang tamu', kawasan: 'Kos', buka: [6, 22], peta: [365, 410, 135, 60] },
   kelas: { nama: 'Ruang kelas', kawasan: 'Kampus', buka: [8, 16], peta: [90, 150, 160, 80] },
   dosen: { nama: 'Ruang dosen', kawasan: 'Kampus', buka: [9, 15], peta: [90, 240, 160, 60] },
   sekre: { nama: 'Sekretariat', kawasan: 'Kampus', buka: [10, 24], peta: [330, 170, 190, 110] },
@@ -24,7 +26,9 @@ const TEMPAT = {
   rawamangun: { nama: 'Rawamangun', kawasan: 'Luar kampus', buka: [14, 20], peta: [0, 0, 0, 0] }
 };
 const luarKampus = id => TEMPAT[id].kawasan === 'Luar kampus';
-const ongkosJalan = (dari, ke) => dari === ke ? 0 : luarKampus(dari) || luarKampus(ke) ? JALAN_LUAR : JALAN_KAMPUS;
+// di dalam kos tidak memakan waktu
+const ongkosJalan = (dari, ke) => dari === ke || (TEMPAT[dari].kawasan === 'Kos' && TEMPAT[ke].kawasan === 'Kos') ? 0 : luarKampus(dari) || luarKampus(ke) ? JALAN_LUAR : JALAN_KAMPUS;
+const lamaJalan = (dari, ke) => ongkosJalan(dari, ke) ? `${ongkosJalan(dari, ke) * 60} menit jalan kaki` : 'bersebelahan';
 const tempatBuka = (id, jam) => { const t = TEMPAT[id]; return (!t.req || t.req(S)) && jam >= t.buka[0] && jam < t.buka[1]; };
 // kader sering ada di tempat tertentu
 const KADER_TEMPAT = { laras: 'kantin', bimo: 'kantin', dimas: 'kantin', wahyu: 'sekre', mei: 'sekre', tigor: 'sekre', asep: 'rawa' };
@@ -93,7 +97,7 @@ function tuduhKader(v) {
 }
 // razia di jalan: sekali sehari paling banyak, makin sering kalau Sorotan tinggi; yang diperiksa hanya isi tas
 function raziaJalan() {
-  if (S.m.raziaJalan || Math.random() >= clamp(S.sorotan / 250, 0.03, 0.35)) return null;
+  if (S.m.raziaJalan || Math.random() >= clamp(S.sorotan / 250, 0.03, 0.35) * (S.f.kardiAwas ? 0.5 : 1)) return null;
   S.m.raziaJalan = true;
   const out = ['Di mulut gang, dua petugas menghentikan setiap orang yang lewat dan memeriksa tas.' + isyaratRazia()];
   if (diTas('buku') && BUKU[S.buku.baca].terlarang) { out.push(`Mereka menemukan ${BUKU[S.buku.baca].judul}. Bukunya disita, dan namamu dicatat.`); S.buku.baca = null; S.buku.sisa = 0; apply({ sorotan: 10 }); }
@@ -110,7 +114,7 @@ MODES.hari = {
   enter(n, lanjutan) {
     if (lanjutan) S.m = { step: 'uang', lines: ['Uang periode ini sudah dihitung sebelum kamu menutup permainan.'], slots: Array(6).fill(null), tugas: {}, out: [] };
     else MODES.kos.enter(n);
-    Object.assign(S.m, { jam: JAM_MULAI, lokasi: 'kamar', peta: false, dilakukan: [], log: [], catatan: null, awal: snap() });
+    Object.assign(S.m, { jam: JAM_MULAI, lokasi: 'kamar', peta: false, dilakukan: [], dikunjungi: ['kamar'], larut: false, log: [], catatan: null, suara: null, bd: {}, awal: snap() });
     rapikanTas();
   },
   panel(n) {
@@ -121,16 +125,21 @@ MODES.hari = {
     if (m.step === 'hasil') return h + `<section class="result" tabindex="-1"><p class="label">Halaman buku catatan</p><ul class="rules">${m.out.map(l => `<li>${l}</li>`).join('')}</ul>${m.ev ? `<div class="event"><p class="label">Kejadian</p><p>${m.ev}</p></div>` : ''}${deltasHTML(m.deltas)}<button type="button" class="btn" data-a="goto" data-v="${S.ending ? 'akhir' : n.next}">Lanjut</button></section>`;
     if (m.razia) h += `<div class="event"><p class="label">Razia di jalan</p>${m.razia.map(l => `<p>${l}</p>`).join('')}</div>`;
     if (m.catatan) h += `<div class="obs" tabindex="-1"><p>${m.catatan}</p></div>`;
+    if (S.ui.dlg && !S.ui.dlg.selesai) return h + dlgHTML();
+    if (m.suara && !m.peta) h += `<div class="kb suara"><b>${m.suara.siapa}</b><p>“${m.suara.k}”</p></div>`;
+    if (S.ui.dlg) h += dlgHTML();
     if (m.peta) {
       const items = Object.entries(TEMPAT).filter(([id, t]) => id !== m.lokasi && (!t.req || t.req(S) || t.tutup)).map(([id, t]) => {
         const tiba = m.jam + ongkosJalan(m.lokasi, id), ok = id === 'kamar' || (tempatBuka(id, tiba) && tiba < jamMalam());
-        return { a: 'ke', v: id, t: t.nama, d: `${ongkosJalan(m.lokasi, id) * 60} menit jalan kaki`, dis: !ok, alasan: t.req && !t.req(S) ? t.tutup : tiba >= jamMalam() ? 'lewat jam malam' : `buka ${fmtJam(t.buka[0])}–${fmtJam(t.buka[1])}`, kel: t.kawasan };
+        return { a: 'ke', v: id, t: t.nama, d: lamaJalan(m.lokasi, id), dis: !ok, alasan: t.req && !t.req(S) ? t.tutup : tiba >= jamMalam() ? 'lewat jam malam' : `buka ${fmtJam(t.buka[0])}–${fmtJam(t.buka[1])}`, kel: t.kawasan };
       });
       return h + pilihanHTML(items.concat({ a: 'tutuppeta', t: 'Tetap di sini' }), 'Pergi ke mana?');
     }
     const ks = kegiatanDi(m.lokasi).map(k => ({ a: 'giat', v: k.id, t: judulKeg(k), d: `${k.jam} jam · ${dKeg(k)}`, dis: m.jam + k.jam > jamMalam(), alasan: 'tidak cukup waktu sebelum jam malam', kel: k.kel }));
-    const pergi = m.lokasi === 'kamar' ? { a: 'tidur', t: 'Tutup hari ini', d: 'tidur, dan tulis harimu di buku catatan' } : { a: 'ke', v: 'kamar', t: 'Pulang ke kos', d: `${ongkosJalan(m.lokasi, 'kamar') * 60} menit`, kel: 'Pergi' };
-    return h + pilihanHTML(ks.concat({ a: 'peta', t: 'Buka peta', d: 'pergi ke tempat lain', kel: 'Pergi' }, pergi), `Di ${TEMPAT[m.lokasi].nama.toLowerCase()}`);
+    const pergi = m.lokasi === 'kamar' ? { a: 'tidur', t: 'Tutup hari ini', d: 'tidur, dan tulis harimu di buku catatan' } : { a: 'ke', v: 'kamar', t: TEMPAT[m.lokasi].kawasan === 'Kos' ? 'Masuk kamar' : 'Pulang ke kos', d: lamaJalan(m.lokasi, 'kamar'), kel: 'Pergi' };
+    // benda di kamar memakai benda amatan kos lama; tempat lain memakai BENDA
+    const amati = m.lokasi === 'kamar' ? (S.ui.obs && n.hots[S.ui.obs] ? obsHTML(n) : '') + chips(Object.entries(n.hots || {})) : bendaHTML(m.lokasi);
+    return h + amati + bicaraHTML(n) + pilihanHTML(ks.concat({ a: 'peta', t: 'Buka peta', d: 'pergi ke tempat lain', kel: 'Pergi' }, pergi), `Di ${TEMPAT[m.lokasi].nama.toLowerCase()}`);
   },
   act(n, a, v) {
     const m = S.m;
@@ -147,7 +156,8 @@ MODES.hari = {
       return;
     }
     if (m.step !== 'jalan') return;
-    m.catatan = null;
+    m.catatan = null; S.ui.obs = null;
+    if (S.ui.dlg) { if (!S.ui.dlg.selesai) return; S.ui.dlg = null; }
     if (a === 'peta') { m.peta = true; m.razia = null; return render(); }
     if (a === 'tutuppeta') { m.peta = false; return render(); }
     if (a === 'ke' && TEMPAT[v] && v !== m.lokasi) {
@@ -159,6 +169,8 @@ MODES.hari = {
       }
       const lewatLuar = luarKampus(v) || luarKampus(m.lokasi);
       m.jam = tiba; m.lokasi = v; m.peta = false; m.razia = lewatLuar ? raziaJalan() : null;
+      if (!m.dikunjungi.includes(v)) m.dikunjungi.push(v);
+      m.suara = suaraDi(v);
       return render();
     }
     if (a === 'tidur' && m.lokasi === 'kamar') return tutupHari(n);
@@ -166,6 +178,7 @@ MODES.hari = {
       const k = v === 'bacatas' ? BACA_TAS : KEG[v];
       if (!k || m.jam + k.jam > jamMalam() || !kegiatanDi(m.lokasi).includes(k)) return;
       m.jam += k.jam; m.razia = null;
+      if (k.slot && jenisMain(k.slot) === 'obrolan') { mulaiOb(k); return render('.dlg'); }
       if (k.slot && jenisMain(k.slot)) { m.step = 'main'; m.mainId = k.id; m.mg = buatMain(5, k.slot, 1); m.mg.hari = true; return render('.mg'); }
       selesaiKegiatan(k, true);
       return render('.obs');
@@ -175,6 +188,11 @@ MODES.hari = {
     const m = S.m;
     if (m.step !== 'jalan') return;
     if (m.peta && TEMPAT[id]) return MODES.hari.act(n, 'ke', id);
+    if (S.ui.dlg && !S.ui.dlg.selesai) return;
+    // benda petunjuk: hasilnya tetap sepanjang hari
+    const b = id.startsWith('bd_') && BENDA[m.lokasi] && BENDA[m.lokasi][id.slice(3)];
+    if (b) { m.catatan = `<b>${b[0]}.</b> ${m.bd[id] = m.bd[id] || b[1](S)}`; S.ui.dlg = null; return render('.obs'); }
+    if (WARGA[id]) { const d = bicaraHari(S).find(k => DIALOG[k].warga === id); if (d) { S.ui.dlg = null; return mulaiObrolan(d); } }
     const k = KEG[id] || KEG['kader_' + id];
     if (k && kegiatanDi(m.lokasi).includes(k)) return MODES.hari.act(n, 'giat', k.id);
   },
@@ -197,12 +215,12 @@ function selesaiKegiatan(k, ok) {
   const teks = !ok ? `${judulKeg(k)}: tidak berhasil, waktunya terbuang.` : k.run ? k.run() : SLOT[k.slot].run(1);
   m.catatan = teks; m.log.push(`${fmtJam(m.jam - k.jam)} · ${teks}`);
   if (S.ending) return tutupHari(NODES[S.node]);
-  if (m.jam >= jamMalam()) { m.catatan += ` Sudah jam malam. Kamu pulang ke kos.`; m.lokasi = 'kamar'; }
+  if (m.jam >= jamMalam() && m.lokasi !== 'kamar') { m.catatan += ` Sudah jam malam. Kamu pulang ke kos, dan ibu kos membukakan pagar sambil melihat jam.`; m.lokasi = 'kamar'; m.larut = true; }
 }
 function tutupHari(n) {
   const m = S.m;
   const buka = `Kamu menjalani hari seperti ini hampir setiap minggu sampai ${namaBulan(n.bulan)}.`;
-  m.out = [buka, ...m.log, ...akibatBulan(m.dilakukan), ...tugasBulan(m)];
+  m.out = [buka, ...m.log, ...akibatBulan(m.dilakukan), ...tugasBulan(m), ...hariWarga(m)];
   const ev = pick(EVENTS)(); apply(ev.fx); m.ev = ev.t;
   if (S.cap > 0) S.cap--;
   m.deltas = diff(m.awal); m.step = 'hasil';
@@ -231,6 +249,7 @@ const orangDi = (ids, slot = ORANG_SLOT) => ids.slice(0, slot.length).map((id, i
 const GAMBAR_TEMPAT = {
   kamar: s => sKos(s, { v: (s.m.jam || 8) >= 18 ? 'malam' : '', kalender: namaBulan(s.bulan) }),
   lorong: () => CONTOH_KIT['Lorong kos'](),
+  tamu: () => CONTOH_KIT['Ruang tamu ibu kos'](),
   kelas: () => KIT.ruang({ seed: 21 }) + KIT.papan(300, 60, 360, 170, { jenis: 'tulis', tulisan: ['Pasal 28 UUD 1945', 'kemerdekaan berserikat'] }) + person({ head: 'kotak', hair: 'uban', glasses: 'kotak', baju: 'batik' }, 720, 150, 0.9) + crowd(431, 8, 500, 1.4, DIM, 0, 960),
   dosen: () => CONTOH_KIT['Ruang dosen']() + hot('harsono', 'Pak Harsono', person({ head: 'kotak', hair: 'uban', glasses: 'bulat', baju: 'batik' }, 420, 140, 0.9)),
   sekre: s => sSekre(s, { v: 'kamis', hadir: kaderDi('sekre') }),
@@ -243,4 +262,4 @@ const GAMBAR_TEMPAT = {
   rawamangun: () => KIT.ruang({ seed: 35 }) + KIT.meja(300, 360, 360) + KIT.kursi(340, 440) + person({ head: 'bulat', hair: 'belah', baju: 'kaus' }, 420, 230, 0.8) + KIT.jam(820, 90, 34, 15)
 };
 SCENES.petaKampus = sPetaKampus;
-SCENES.tempat = s => GAMBAR_TEMPAT[(s.m && s.m.lokasi) || 'kamar'](s);
+SCENES.tempat = s => { const t = (s.m && s.m.lokasi) || 'kamar'; return GAMBAR_TEMPAT[t](s) + gambarWarga(t); };

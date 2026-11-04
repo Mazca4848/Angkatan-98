@@ -265,7 +265,7 @@ const EVENTS = [
   () => ({ t: 'Listrik padam dua malam. Kamu membaca dengan lilin sampai matamu perih.', fx: { nyali: -2 } })
 ];
 const KOS_HOTS = {
-  kalender: { label: 'Kalender', text: () => 'Kalender bergambar Danau Toba, hadiah dari toko kelontong. Setiap slot yang kamu isi akan dicoret merah.' },
+  kalender: { label: 'Kalender', text: () => 'Kalender bergambar Danau Toba, hadiah dari toko kelontong. Setiap hari yang kamu tulis di buku catatan kamu coret merah.' },
   jendela: { label: 'Jendela', text: s => s.sorotan >= 50 ? 'Dua motor tanpa pelat parkir di ujung gang. Pengendaranya bergantian melihat ke jendelamu.' : s.sorotan >= 25 ? 'Ada satu motor tanpa pelat di ujung gang. Pengendaranya merokok dan tidak turun.' : 'Gang sepi. Anak-anak main layangan di ujung gang.' },
   cermin: { label: 'Cermin', text: s => s.nyali < 40 ? 'Wajahmu sendiri. Lingkar matamu makin gelap.' : 'Wajahmu sendiri. Masih kelihatan seperti mahasiswa biasa.' },
   meja: { label: 'Meja belajar', text: s => `KHS terakhir: IPK ${ipkStr(s.ipk)}. Di sebelahnya, surat dari rumah yang belum kamu balas.` },
@@ -434,7 +434,7 @@ MODES.kos = {
     }
     if (m.step === 'hasil') return h + `<section class="result" tabindex="-1"><p class="label">Bulan-bulan ini</p><ul class="rules">${m.out.map(l => `<li>${l}</li>`).join('')}</ul><div class="event"><p class="label">Kejadian</p><p>${m.ev}</p></div>${deltasHTML(m.deltas)}<button type="button" class="btn" data-a="goto" data-v="${S.ending ? 'akhir' : n.next}">Lanjut</button></section>`;
     if (m.step === 'main') return h + panelMain(m);
-    if (m.step === 'tugas') return h + `<div class="ask"><p class="label">Beri tugas kadermu bulan-bulan ini</p><div class="posgrid">${kaderAktif().map(k => `<div class="slot full"><span class="label">${KADER[k].nama}</span><span>${TUGAS[m.tugas[k] || 'istirahat'].t}${(S.lelah || {})[k] >= 2 ? ' · <small class="bad">matanya cekung</small>' : ''}</span><button type="button" class="link" data-a="tugas" data-v="${k}">Ganti</button>${S.f['hadiah_' + k] ? '' : `<button type="button" class="link" data-a="hadiah" data-v="${k}"${S.uang.tunai < harga(KADER[k].harga) ? ' disabled' : ''}>Beri ${KADER[k].benda} (${rp(harga(KADER[k].harga))})</button>`}</div>`).join('')}</div>${m.hadiahNote ? `<p class="fine">${m.hadiahNote}</p>` : ''}<button type="button" class="btn" data-a="tugasok">Bagikan tugas</button></div>`;
+    if (m.step === 'tugas') return h + `<div class="ask"><p class="label">Beri tugas kadermu bulan-bulan ini</p><div class="posgrid">${kaderAktif().map(k => `<div class="slot full"><span class="label">${KADER[k].nama}</span><span>${TUGAS[m.tugas[k] || 'istirahat'].t}${(S.lelah || {})[k] >= 2 ? ' · <small class="bad">matanya cekung</small>' : ''}</span><button type="button" class="link" data-a="tugas" data-v="${k}">Ganti</button></div>`).join('')}</div><button type="button" class="btn" data-a="tugasok">Bagikan tugas</button></div>`;
     const kotak = i => { const a = m.slots[i]; return a ? `<div class="slot full"><span>${SLOT[a].t}</span><button type="button" class="link" data-a="unslot" data-v="${i}">Hapus</button></div>` : `<button type="button" class="slot${m.pilih === i ? ' aktif' : ''}" data-a="pilihslot" data-v="${i}"><span class="empty">${m.pilih === i ? 'akan diisi' : 'kosong'}</span></button>`; };
     const baris = PRIOR.map((p, r) => `<p class="label">${p.t} · ${['dikerjakan sungguh-sungguh, boleh dicoba lagi kalau gagal', 'dikerjakan sekali jalan', 'sambil lalu'][r]}</p><div class="slots dua">${kotak(2 * r)}${kotak(2 * r + 1)}</div>`).join('');
     const penuh = m.slots.every(Boolean);
@@ -487,7 +487,7 @@ MODES.kos = {
   actions(n) {
     const m = S.m;
     if (m.step === 'uang' && m.surat) return [0, 1, 2].map(v => ({ a: 'surat', v }));
-    if (m.step === 'tugas') { const ks = kaderAktif(); return [{ a: 'tugasok' }, ...ks.map(v => ({ a: 'tugas', v })), ...ks.filter(k => !S.f['hadiah_' + k]).map(v => ({ a: 'hadiah', v }))]; }
+    if (m.step === 'tugas') { const ks = kaderAktif(); return [{ a: 'tugasok' }, ...ks.map(v => ({ a: 'tugas', v }))]; }
     if (m.step === 'uang') { const ops = [{ a: 'selesai' }]; if (!S.bankJenis) ops.push({ a: 'bank', v: pick(['kecil', 'besar']) }); if (S.uang.tunai > 60000) ops.push({ a: 'setor', v: 25000 }, { a: 'beliusd' }, { a: 'belibarang' }); if (S.uang.usd >= 10) ops.push({ a: 'jualusd' }); if (S.uang.utang > 0 && S.uang.tunai > 0) ops.push({ a: 'bayarutang' }); return ops; }
     if (m.step === 'hasil') return [{ a: 'goto', v: S.ending ? 'akhir' : n.next }];
     if (m.step === 'main') return aksiBotMain(m.mg);

@@ -386,7 +386,7 @@ const bicaraHTML = n => { const ks = S.ui.last ? [] : obrolanAda(n); return ks.l
 function mulaiObrolan(k) {
   if (S.ui.last || S.ui.dlg || !obrolanAda(NODES[S.node]).includes(k)) return;
   const D = DIALOG[k];
-  if (D.mulai) apply(D.mulai);
+  if (D.mulai) apply(val(D.mulai));
   S.ui.obs = null;
   S.ui.dlg = { k, i: 0, jejak: [], selesai: false };
   render('.dlg');
@@ -397,14 +397,14 @@ function ucap(v) {
   const D = DIALOG[g.k], G = giliranIni(g), o = G.opsi[v];
   if (!o) return;
   const [t, arah, balas, lain, fx] = o;
-  ubahHati(D.siapa, ARAH[arah]);
+  ubahHati(D.siapa, ARAH[arah] * (D.bobot ?? 1));
   S.ui.raut = { ...S.ui.raut, [D.siapa]: arah === 's' ? 'senyum' : arah === 'l' ? RAUT_BERLAWANAN[D.siapa] || 'marah' : 'tenang' };
   for (const [id, n] of Object.entries(lain || {})) ubahHati(id, n);
-  if (fx) apply(fx);
-  g.jejak.push({ kata: G.kata, jawab: t, balas: val(balas) });
+  if (fx) apply(val(fx));
+  g.jejak.push({ kata: G.kata, jawab: t, balas: val(balas), arah });
   catatRiwayat({ judul: 'Bicara dengan ' + val(D.nama), teks: [G.kata], pick: t, sesudah: [val(balas)] });
   g.i++;
-  if (g.i >= D.giliran.length) { g.selesai = true; g.tutup = rasa(D.siapa, D.tutup); S.ui.raut[D.siapa] = { hangat: 'senyum', dingin: RAUT_BERLAWANAN[D.siapa] || 'marah', biasa: 'tenang' }[sikap(D.siapa)]; S.f['dlg_' + g.k] = true; if (D.hadiah && D.hadiah[sikap(D.siapa)]) apply(D.hadiah[sikap(D.siapa)]); }
+  if (g.i >= D.giliran.length) { g.selesai = true; g.tutup = rasa(D.siapa, D.tutup); S.ui.raut[D.siapa] = { hangat: 'senyum', dingin: RAUT_BERLAWANAN[D.siapa] || 'marah', biasa: 'tenang' }[sikap(D.siapa)]; S.f['dlg_' + g.k] = true; if (D.hadiah && D.hadiah[sikap(D.siapa)]) apply(D.hadiah[sikap(D.siapa)]); if (D.sesudah) D.sesudah(g); }
   render('.dlg');
 }
 // pergi saat diajak bicara tetap terasa

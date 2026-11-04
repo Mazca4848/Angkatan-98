@@ -48,8 +48,10 @@ Mekanik utama: bar kuasa rezim yang harus kamu kosongkan lewat aksi sebelum 21 M
 | `js/scenes.js` | semua latar adegan, digambar dengan SVG |
 | `js/engine.js` | state, ekonomi, rumor, render, dan simpan otomatis |
 | `js/modes.js` | mode permainan: cerita, kos, inspeksi, kejar-kejaran, buron, interogasi |
-| `js/minigame.js` | mini game slot kos: kuis kuliah, les privat, obrolan dengan senior, kader, dan keluarga, rangkuman bacaan, orasi per kalangan, menenangkan kawan saat buron |
+| `js/minigame.js` | mini game kegiatan: kuis kuliah, les privat, rangkuman bacaan, orasi per kalangan, menenangkan kawan saat buron |
 | `js/story1.js` – `js/story4.js` | naskah babak I sampai V dan ending |
+| `js/hari.js` | Hari yang Berulang: peta kampus, jam, tempat, kegiatan, tas, dan razia jalan |
+| `js/warga.js` | warga di peta: pelapor, anak tiap senior, tokoh sampingan, suara masyarakat, benda petunjuk |
 | `js/dialog.js` | percakapan dengan keluarga, senior, dan kader; jawabanmu menggeser afeksi tersembunyi tiap tokoh |
 | `js/suara.js` | suara latar dan bunyi kejadian, disintesis dengan Web Audio API tanpa berkas rekaman |
 | `js/kit.js` | kit adegan: bagian latar yang bisa dirakit untuk tempat baru |

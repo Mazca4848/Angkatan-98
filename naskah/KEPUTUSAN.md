@@ -83,6 +83,6 @@ Cara mengukur: catat waktu bermain dari tester uji tertutup per babak. Uji bot t
 1. Isyarat adegan dan ekspresi. **(selesai: `js/isyarat.js`, ekspresi sedih/senyum/kaget, sorotan otomatis, raut di percakapan)**
 2. Batas pilihan dan riwayat teks. **(selesai: `pilihanHTML` dengan kelompok dan "Pilihan lain", satu jalan jadi tombol lanjut, laci "Riwayat cerita", bot memeriksa maksimal 4)**
 3. Hari yang Berulang, peta kampus, tas. **(selesai: `js/hari.js`; mode `hari` menggantikan kunjungan kos, 12 tempat, 08.00 sampai jam malam, tas 4 slot dengan razia jalan, versi simpanan 2. Belum: agenda di dalam hari (selingan masih muncul sebelum hari), peleburan mini game obrolan, penyederhanaan uang, pembersihan kode slot lama di `MODES.kos`)**
-4. Tokoh sampingan, pelapor, suara masyarakat.
+4. Tokoh sampingan, pelapor, suara masyarakat. **(selesai: `js/warga.js`; pelapor ibu kos, Pak RT, Bapak dengan takut 0–3, dua tanda di buku catatan sebelum melapor, tanda pertama ibu kos memajukan jam malam sejam; 8 anak senior dengan rekrut yang menurunkan afeksi senior 2, paling banyak 3; Pak Kardi, Bu Retno, Joko; suara masyarakat per tempat menurut bulan; benda petunjuk per tempat; ruang tamu kos di peta; obrolan kos dilebur ke percakapan bercabang dan hadiah kader jadi opsi percakapan. Belum: Wisnu (ikut kilas balik di langkah 6), penyederhanaan uang, pembersihan kode slot lama)**
 5. Peta kota dan transportasi.
 6. Babak V dan kilas balik.
